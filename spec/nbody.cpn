@@ -35,15 +35,6 @@
 
 /* inline seems to be unsupported? */
 /*because of the fp I can't make this guy into a process, so I'll inline it */
-int read_particle(FILE *fp, particle_t *res){
-	 int ret = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(res->mass), &(res->pos[0]), &(res->pos[1]), &(res->pos[2]), &(res->vel[0]), &(res->vel[0]), &(res->vel[0]));  
-    /* testing: no initial velocities */
-	 res->vel[0] = 0;
-	 res->vel[1] = 0;
-	 res->vel[2] = 0;
-	 
-	 return ret;
-}
 
 
 __PNkpn Read_file __PNin (char filename[50])
@@ -74,13 +65,11 @@ __PNkpn Read_file __PNin (char filename[50])
 		  rewind(fp);
 	 }
 
-	 while(read_particle(fp, &part) == 7){
-		  i++;
-
+	 do{
+		  i = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(part.mass), &(part.pos[0]), &(part.pos[1]), &(part.pos[2]), &(part.vel[0]), &(part.vel[0]), &(part.vel[0]));  
 		  __PNout(mass){
 				mass = part.mass;
-					 }
-
+		  }
 
 		  __PNout(y_zero){
 				int l;
@@ -89,7 +78,7 @@ __PNkpn Read_file __PNin (char filename[50])
 					 y_zero[l+3] = part.vel[l];
 				}
 		  }
-	 }
+	 }while(i == 7);
 }
 
 /* hard coded array sizes. K for the biggest RK we might include */
