@@ -249,7 +249,7 @@ int main(){
 	 /****************************/
 
 	 char *name = "../data/dubinski_small.tab";
-	 char *output_file = "../output/dubinski_small";
+	 char *output_file = "output/dubinski_small";
 	 FILE *fp = fopen(name,"r");
 	 
 	 long N = 0;
