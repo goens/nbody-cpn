@@ -10,10 +10,10 @@ typedef struct particle_t {
 
 
 /* const real_t G_const = 6.67408e-11; */ /* m^3 kg^{-1} s^{-2} */
-const real_t G_const = 4.302e-3; /* pc M_sun^{-1}(km/s)^2
+const real_t G_const = 4.302e-3; /* pc M_sun^{-1}(km/s)^2 */
 
-const int Order = 4; //for rk4
-const real_t eps = 1e-1; //this is just a wild guess!
+/* const int Order = 4;*/ /* for rk4 */
+/* const real_t eps = 1e-1;*/ /* this is just a wild guess! */
 
 /* Improvement: use runge-kutta-fehlberg for an evaluation of order 5.
  * see: http://www.aip.de/groups/soe/local/numres/bookcpdf/c16-2.pdf

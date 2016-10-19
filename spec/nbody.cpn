@@ -1,0 +1,410 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+/* #include <gsl/gsl_cblas.h> */
+
+#include "nbody.h"
+
+/*
+ * DATASET:
+ * Dubinksi 1995 : The file dubinski.tab.gz contains a simple (free format) table of 7 columns and 81920 rows:
+ * the masses and six phase space coordinates (x,y,z,vx,vy,vz) of 81920 particles that define the initial conditions
+ * for a MW/Andromeda collision. 
+ * Contact John Dubinski (dubinski@cita.utoronto.ca) for more details 
+ * (see also: Dubinski, Mihos & Hernquist, 1996, ApJ, 462, 576). Its the model B collision discussed in this paper). 
+
+ * \delta t = 0.1, this corresponds to 1.8e6 years when scaled to physical units for the galaxy
+ * Plummer softening radius \epsilon = 0.025 (80pc) 
+ */
+
+
+/*
+ * This is a Runge-Kutta step
+ * For a given function f, it takes:
+ *   - the time (or in general, ODE variable) t
+ *   - the (current) solution vector (approximation) y
+ *   - the step length for the next step h
+ *
+ */
+
+/* inline seems to be unsupported? */
+/*because of the fp I can't make this guy into a process, so I'll inline it */
+int read_particle(FILE *fp, particle_t *res){
+	 int ret = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(res->mass), &(res->pos[0]), &(res->pos[1]), &(res->pos[2]), &(res->vel[0]), &(res->vel[0]), &(res->vel[0]));  
+    /* testing: no initial velocities */
+	 res->vel[0] = 0;
+	 res->vel[1] = 0;
+	 res->vel[2] = 0;
+	 
+	 return ret;
+}
+
+
+__PNkpn Read_file __PNin (char filename[50])
+	 __PNout( real_t mass, real_t y_zero[6], long N){
+
+	 FILE *fp;
+	 particle_t part; 
+	 long i = 0;
+
+
+	 __PNin(filename){
+		  fp = fopen(filename,"r");
+		  if(fp == NULL){
+				printf("An error ocurred while reading the file: %s\n", filename);
+		  }
+	 }
+
+	 __PNout(N){ 
+		  /* a bit inefficient: determine the number of lines first for allocation */
+		  while(!feof(fp))
+		  {
+				char ch = fgetc(fp);
+				if(ch == '\n')
+				{
+					 N++;
+				}
+		  }
+		  rewind(fp);
+	 }
+
+	 while(read_particle(fp, &part) == 7){
+		  i++;
+
+		  __PNout(mass){
+				mass = part.mass;
+					 }
+
+
+		  __PNout(y_zero){
+				int l;
+				for(l=0;l<3;l++){
+					 y_zero[l] = part.pos[l];
+					 y_zero[l+3] = part.vel[l];
+				}
+		  }
+	 }
+}
+
+/* hard coded array sizes. K for the biggest RK we might include */
+__PNkpn RKStep __PNin( real_t t, real_t y[6], real_t h, real_t f_t_y[6])
+	 __PNout( real_t t_fn, real_t y_fn[6], real_t y_tilde[6], real_t t_tilde){
+	 /* __PNparam(rk_init_function_t rk_init ) */ /* TODO: make it really parametric for different rk methods */
+  
+		  long i,j,l;
+	 /* indices for: 
+		 i: equations (particles)
+		 l: equations (components)
+		 j: RK Butcher-Tableau
+	 */
+
+	 /*initialize with the maximal lengths from the different methods */
+	 int m = 4;
+	 const int n = 6; //components (2*dimensions)
+  
+	 /* Butcher Tableau */
+	 int len_Alpha, len_Gamma, len_Beta, height_Beta;
+	 real_t Alpha[m];
+	 real_t Gamma[m];
+	 real_t Beta[m*m];
+	 set_rk4(&len_Alpha, Alpha, &len_Beta, &height_Beta, Beta, &len_Gamma, Gamma);
+	 m = len_Alpha;
+	 long k;
+
+	 rvector_t ynew_1;
+	 rvector_t ynew_2;
+	 /* adaptive step parameters */
+	 /* rvector_t *e; */
+	 /* real_t eps2,c; */
+
+	 /* do{ */
+	 
+	 while(1){
+
+		  /* init step */ 
+		  real_t sum[6];
+
+		  __PNin(t, y, h){
+
+				real_t K[m][6];
+
+				/* execute the ODE function m times */
+				for(j=0;j<m;j++){
+					 
+					 __PNout( t_fn, y_fn){
+						  for(l=0;l<n;l++){
+								y_fn[l] = y[l];
+						  }
+
+						  /* update the arguments to calculate the next K[j] */
+						  for(l=n*i;l<n*(i+1);l++){
+								sum[l] = 0;
+								for(k=0;k<j;k++){
+									 sum[l]+= Beta[j,k]*K[k][l];
+								}
+								/* ynew[l] += h * sum[l] */
+								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
+								y_fn[l] += h * sum[l];
+						  }
+						  t_fn = t + Alpha[j] * h;
+					 }
+					 __PNin(f_t_y){
+						  for(l=0;l<6;l++){
+								K[j][l] = f_t_y[l];
+						  }
+					 }
+
+					 /* K[j] = (*f)(t + Alpha[j] * h, ynew + (h * sum)); */
+					 /*printf("finished. K[%ld][0] = %lf\n",j,K[j][0]); */
+				} 
+
+ 
+				__PNout(y_tilde, t_tilde){
+
+					 for(l=n*i;l<n*(i+1);l++){
+						  sum[l] = 0;
+
+						  for(j=0;j<m;j++){
+								/* if(i==0) */
+								/*     printf("sum[%ld] = %lf*%lf\n",l,Gamma[j],K[j][l]); */
+								sum[l]+=Gamma[j]*K[j][l]; //could rewrite in atlas
+						  }
+
+						  y_tilde[l] = y[l] + h*sum[l]; //atlas?
+						  /* if(i==0) */
+						  /*     printf("ynew[%ld] = %lf + %lf*%lf\n",l,y[l],h,sum[l]); */
+					 }
+					 t_tilde = t + h;
+				}
+		  }
+		  /* error estimation (for the adaptive version) */
+
+		  /* for(j=0;j<n;j++) sum[j] = 0; */
+
+		  /* for(j=0;j<m;j++){ */
+		  /* 	  sum+=Delta(j)*K(j); //atlas */
+		  /* } */
+		  /* e = h*sum; */
+		  /* eps2 = e.NormMax(); //atlas? */
+		  /* //cout << "eps = " << eps << " eps2 = " << eps2;   */
+		  /* c = (real)0.9 * powl(eps/eps2  ,(1./(1.+Order))); */
+		  /* t = t+h; */
+
+		  /* if(eps2>eps){ */
+		  /* 	t -= h; */
+		  /* } */
+
+		  /* if(c>5) c = 5; */
+		  /* if(c<0.1) c = 0.1; */
+		  /* h *= c; */
+	 
+	 
+		  /* }while(eps2>eps); */
+	 
+	 }
+
+}
+
+__PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t, real_t y_chan[6])
+	 __PNout(real_t x_chan[6]){
+	 long N;
+    long i,j,l;
+    real_t norm;
+	 
+	 __PNin(N_chan){ N = N_chan; }
+	 printf("reading masses for nbdoy...");
+	 real_t *masses = malloc(N*sizeof(real_t));
+	 for(i = 0; i < N; i++){
+		  __PNin(mass){
+				masses[i] = mass;
+		  }
+	 }
+	 printf("done.\n");
+    const int n = 6; /*components (2*dimensions) */
+    /* printf("executing nbody function with t = %lf",t); */
+
+	 real_t *x = malloc(N*sizeof(real_t));
+	 real_t *y = malloc(N*sizeof(real_t));
+
+	 while(1){ 
+		  /*__PNin(y:N) __PNout(x:N){*/ /*I would actually like to do this*/
+		  
+		  for(i=0;i<N;i++){
+				__PNin(y_chan){
+					 for(l=0;l<n/2;l++) /* the first 3 components */
+						  y[n*i+l] = y_chan[l];
+					 y[n*i+n/2+l] = y_chan[n/2+l];
+					 x[n*i+l] = y_chan[n/2+l];  
+
+				}
+				for(l=n*i+n/2;l<n*(i+1);l++) /* the second 3 components (where f will be applied) */
+					 x[l] = 0; 
+		  }
+		  /* if (i==0) printf( "x = %lf. ", x[0]); */
+		  for(j=0;j<N;j++){
+				if(i!=j){
+
+					 /* rvector_t diff; */
+					 /* for(l = 0;l<n/2;l++) diff[l] =  y[n*j+l]-y[n*i+l]; */
+					 /* norm = pow(cblas_dnrm2(3,diff,1),3);  */
+					 norm = 0;
+					 for(l = 0; l<n/2;l++){
+						  norm += pow(y[n*j+l]-y[n*i+l],2);
+					 }
+					 norm = pow(norm,3./2.);
+
+					 for(l=0;l<n/2;l++){
+						  real_t f_i_j = (masses[j] * G_const/norm * (y[n*j+l] - y[n*i+l]));
+						  /* if(i==0 && j==1) printf("f_0_1 = %lf * %lf/%lf * (%lf - %lf) =%lf. ",particles[j].mass , G_const,norm , y[n*j+l] , y[n*i+l],f_i_j); */
+						  x[n*i + n/2 + l] += f_i_j;
+					 }
+				}
+				__PNout(x_chan){
+					 for(l=0;l<n;l++)
+						  x_chan[l] = x[n*i+l];
+				}
+		  }
+		  /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
+	 }
+	 free(masses);
+}
+
+
+__PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass, real_t t, real_t y[6]){
+	 /* setup phase */
+	 char filename_base[50];
+	 const int n = 6;
+	 long N;
+	 long i;
+
+	 __PNin(filename_base_chan){ strcpy(filename_base,filename_base_chan);}
+	 char output_string[strlen(filename_base) + 15];
+	 strcpy(output_string,filename_base);
+	 __PNin(N_chan){ N = N_chan;}
+	 real_t *masses = malloc(N*sizeof(real_t));
+	 for(i = 0; i < N; i++){
+		  __PNin(mass){
+				masses[i] = mass;
+		  }
+	 }
+	 while(1){
+		  __PNin(t){
+				char time[15];
+				sprintf(time,"_%010.6lf.out",t);
+				strcat(output_string,time);
+				struct stat st = {0};
+
+				if (stat("output", &st) == -1) {
+					 mkdir("output", 0700);
+				}
+				FILE *output_file = fopen(output_string,"w");
+
+				/* fprintf(output_file,"time t = %lf: \n", t); */
+				for(i=0;i<N;i++){
+					 __PNin(y){
+					 /* fprintf(output_file,"x = %lf, y = %lf, z = %lf, vx = %lf, vy = %lf, vz = %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5]); */
+					 fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[0],y[1],y[2],y[3],y[4],y[5],masses[i]);
+					 }
+				}
+				fclose(output_file);
+		  }
+	 }
+	 free(masses);
+}
+
+__PNkpn Control __PNin(real_t y_in[6], long N_chan) __PNout(char filename[50], char output_filename_base[50], real_t y[6], real_t t, real_t h){
+
+	 /* initalization */
+	 char name[] = "data/dubinski_small.tab";
+	 char output_file[] = "output/dubinski_small";
+	 long N,i;
+
+	 real_t start_t =0, end_t=500, h=0.1;
+    real_t t = start_t;
+	 int n,l;
+
+	 /* read particles from file */
+	 __PNout(filename){ strcpy(filename,name);}
+	 __PNin(N_chan){ N = N_chan;}
+
+	 printf("read a file with %ld particles\n",N);
+
+	 /* solve differential equation */
+    printf("Grav. const: %lf\n", G_const);
+
+	 while(t+h <= end_t){
+
+		  /* __PNin(y_in:N) __PNout(y:N,t,h) */
+		  __PNout(t,h){
+				for(i=0;i<N;i++){
+					 __PNin(y_in) __PNout(y){
+						  for(l=0;l<6;l++){
+								y[l] = y_in[l];
+						  }
+					 }
+		
+					 t+= h; /* for the non-adapting version */
+					 if(t+h>=end_t){ 
+						  h = end_t;
+					 }
+				}
+		  }
+		  printf("RKstep done: t = %lf\n", t); 
+	 }
+
+	 for(i=0;i<N;i++){
+		  __PNout(t,h){
+				__PNin(y_in) __PNout(y){
+					 for(l=0;l<6;l++){
+						  y[l] = y_in[l];
+					 }
+				}
+		  }
+	 }
+
+	 printf("last RKstep done: t = %lf\n", t);
+
+	 /* clean up */ 
+}
+
+/*********************************/
+/*     KPN Topology (Graph)      */
+/*********************************/
+
+/*
+   a very interesting problem application:
+   here, the necessary channel sizes, are 
+   very much input dependent! 
+*/
+
+__PNchannel real_t y[6], y_read[6], y_fn[6], f_t_y[6],y_tilde[6];
+__PNchannel real_t mass,t,h,t_fn,t_tilde;
+__PNchannel long n;
+__PNchannel char filename[50],output_filename_base[50];
+
+__PNprocess reader = Read_file 
+	 __PNin(filename)
+	 __PNout(mass,y_read,n);
+
+__PNprocess control = Control 
+	 __PNin(y_read,n)
+	 __PNout(filename, output_filename_base, y, t, h);
+
+__PNprocess writer = Print_step 
+	 __PNin(output_filename_base, n, mass, t_tilde, y_tilde);
+
+__PNprocess nbody = Nbodyprob 
+	 __PNin(n,mass,t_fn,y_fn)
+	 __PNout(f_t_y);
+
+/* here we could do parallel rk steps! (dlp) */
+__PNprocess rk = RKStep 
+	 __PNin( t, y, h, f_t_y)
+	 __PNout( t_fn, y_fn, y_tilde, t_tilde);
+

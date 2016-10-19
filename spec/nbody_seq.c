@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -222,6 +226,11 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
   char time[15];
   sprintf(time,"_%010.6lf.out",t);
   strcat(output_string,time);
+  struct stat st = {0};
+
+  if (stat("output", &st) == -1) {
+		mkdir("output", 0700);
+  }
   FILE *output_file = fopen(output_string,"w");
 
   /* fprintf(output_file,"time t = %lf: \n", t); */
@@ -239,8 +248,8 @@ int main(){
 	 /* read particles from file */
 	 /****************************/
 
-	 char *name = "data/dubinski_small.tab";
-	 char *output_file = "output/dubinski_small";
+	 char *name = "../data/dubinski_small.tab";
+	 char *output_file = "../output/dubinski_small";
 	 FILE *fp = fopen(name,"r");
 	 
 	 long N = 0;
