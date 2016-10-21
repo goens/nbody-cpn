@@ -110,7 +110,7 @@ void RKstep ( rhs_function_t f, real_t t, real_t *y, real_t *x, real_t h, long N
 				for(l=n*i;l<n*(i+1);l++){
 					 sum[l] = 0;
 					 for(k=0;k<j;k++){
-						  sum[l]+= Beta[j,k]*K[k][l];
+						  sum[l]+= Beta[j*m+k]*K[k][l];
 					 }
 					 /* ynew[l] += h * sum[l] */
 					 /* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
@@ -219,7 +219,6 @@ void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
 
 
 void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *particles){
-  const int n = 6;
   long i;
   char output_string[strlen(filename_base) + 15];
   strcpy(output_string,filename_base);
@@ -287,9 +286,9 @@ int main(){
 	 real_t *y = calloc(6*N,sizeof(real_t));
 	 /* real_t *x = calloc(6*N,sizeof(real_t)); */
 
-	 real_t start_t =0, end_t=80, h=1;
+	 real_t start_t =0, end_t=5, h=0.1;
     real_t t = start_t;
-	 int n,l;
+	 int l;
 
     /* for(i=0;i<6*N;i++) x[i] = 0; */
     for(i=0;i<N;i++){ 
@@ -305,7 +304,7 @@ int main(){
 
     print_step(t, y, output_file,N,particles); 
 
-	 while(t+h <= end_t){
+	 while(t+h < end_t){
 		
 		  RKstep(f,t,y,y,h,N,particles);
 		
@@ -314,8 +313,8 @@ int main(){
 		  print_step(t, y, output_file,N,particles); 
 
         t+= h; /* for the non-adapting version */
-		  if(t+h>=end_t){ 
-				h = end_t;
+		  if(t >= end_t){ 
+				t = end_t;
 		  }
 	 }
 	 RKstep(f,t,y,y,h,N,particles);
