@@ -184,6 +184,7 @@ void RKstep ( rhs_function_t f, real_t t, real_t *y, real_t *x, real_t h, long N
 void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
     long i,j,l;
     real_t norm;
+	 real_t soft_eps_sq = soft_eps * soft_eps; 
 
     const int n = 6; /*components (2*dimensions) */
     /* printf("executing nbody function with t = %lf",t); */
@@ -203,6 +204,8 @@ void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
 					 norm = 0;
 					 for(l = 0; l<n/2;l++){
 						  norm += pow(y[n*j+l]-y[n*i+l],2);
+						  if(norm < soft_eps_sq) /* minimal distance to avoid numeric errors! */
+								norm = soft_eps_sq;
 					 }
 					 norm = pow(norm,3./2.);
 
@@ -248,7 +251,7 @@ int main(){
 	 /****************************/
 
 	 char *name = "../data/dubinski_small.tab";
-	 char *output_file = "output/dubinski_small";
+	 char *output_file = "output/nbody_sim";
 	 FILE *fp = fopen(name,"r");
 	 
 	 long N = 0;
@@ -285,8 +288,7 @@ int main(){
 
 	 real_t *y = calloc(6*N,sizeof(real_t));
 	 /* real_t *x = calloc(6*N,sizeof(real_t)); */
-
-	 real_t start_t =0, end_t=5, h=0.1;
+	 real_t start_t =0, end_t=100, h=0.01;
     real_t t = start_t;
 	 int l;
 

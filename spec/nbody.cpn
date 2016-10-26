@@ -136,7 +136,7 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 
 		  j = 0; 
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
-				__PNin(y) __PNout( t_fn, y_fn){ /* here's the deadlock! (reading y for j=1*/
+				__PNin(y) __PNout(y_fn){ 
 					 for(l=0;l<n;l++){
 						  y_fn[l] = y[l];
 					 }
@@ -151,7 +151,10 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 						  /* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 						  y_fn[l] += h * sum[l];
 					 }
-					 t_fn = t + Alpha[j] * h;
+
+					 __PNout(t_fn){
+						  t_fn = t + Alpha[j] * h;
+					 }
 				}
 		  }
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
@@ -167,7 +170,7 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 
 		  j = 1;
 				for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
-					 __PNin(y_copy) __PNout( t_fn, y_fn){ /* here's the deadlock! (reading y for j=1*/
+					 __PNin(y_copy) __PNout(y_fn){ /* here's the deadlock! (reading y for j=1*/
 						  for(l=0;l<n;l++){
 								y_fn[l] = y_copy[l];
 						  }
@@ -182,7 +185,9 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 								y_fn[l] += h * sum[l];
 						  }
+						  __PNout(t_fn){
 						  t_fn = t + Alpha[j] * h;
+						  }
 					 }
 				}
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
@@ -198,7 +203,7 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 
 		  j = 2;
 				for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
-					 __PNin(y_copy2) __PNout( t_fn, y_fn){ /* here's the deadlock! (reading y for j=1*/
+					 __PNin(y_copy2) __PNout(y_fn){ /* here's the deadlock! (reading y for j=1*/
 						  for(l=0;l<n;l++){
 								y_fn[l] = y_copy2[l];
 						  }
@@ -213,7 +218,9 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 								y_fn[l] += h * sum[l];
 						  }
-						  t_fn = t + Alpha[j] * h;
+						  __PNout(t_fn){
+								t_fn = t + Alpha[j] * h;
+						  }
 					 }
 				}
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
@@ -229,7 +236,7 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 
 		  j = 3;
 				for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
-					 __PNin(y_copy3) __PNout( t_fn, y_fn){ /* here's the deadlock! (reading y for j=1*/
+					 __PNin(y_copy3) __PNout(y_fn){ /* here's the deadlock! (reading y for j=1*/
 						  for(l=0;l<n;l++){
 								y_fn[l] = y_copy3[l];
 						  }
@@ -244,7 +251,9 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y[6], long N_cha
 								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 								y_fn[l] += h * sum[l];
 						  }
-						  t_fn = t + Alpha[j] * h;
+						  __PNout(t_fn){
+								t_fn = t + Alpha[j] * h;
+						  }
 					 }
 				}
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
@@ -315,6 +324,7 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t, real_t y_chan[6])
 	 long N;
     long i,j,l;
     real_t norm;
+	 const real_t soft_eps_sq = soft_eps * soft_eps;
 	 
 	 __PNin(N_chan){ N = N_chan; }
 	 printf("reading masses for nbdoy...");
@@ -356,6 +366,8 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t, real_t y_chan[6])
 						  for(l = 0; l<n/2;l++){
 								norm += pow(y[n*j+l]-y[n*i+l],2);
 						  }
+						  if (norm < soft_eps_sq)
+								norm = soft_eps_sq; /* minimal distance for numerical issues */
 						  norm = pow(norm,3./2.);
 
 						  for(l=0;l<n/2;l++){
@@ -430,10 +442,10 @@ __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_i
 
 	 /* initalization */
 	 char name[] = "data/dubinski_small.tab";
-	 char output_file[] = "output/dubinski_small";
+	 char output_file[] = "output/nbody_sim";
 	 long N,i;
 
-	 real_t start_t =0, end_t=5, h=0.1;
+	 real_t start_t =0, end_t=10, h=0.1;
     real_t t = start_t;
 	 int l;
 

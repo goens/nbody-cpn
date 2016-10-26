@@ -31,7 +31,7 @@ def get_masses(filename):
         masses.append(float(values[6]))
     return masses
 
-file_pattern = "output/dubinski_small_*.out"
+file_pattern = "spec/output/nbody_sim*.out"
 files = sorted(glob.glob(file_pattern))
 
 x_min = 0
@@ -64,6 +64,10 @@ fig = plt.figure()
 #ax = fig.add_axes([x_min,y_min,width,height ])
 #ax = fig.add_axes([0,-100,20,200])
 scat = plt.scatter(x, y, c='blue',label='start', s=masses, edgecolors='none')
+plt.xlim(x_min - abs(0.1*x_min),x_max + abs(0.1*x_max))
+plt.ylim(y_min - abs(0.1*y_min),y_max + abs(0.1*y_max))
+plt.draw()
+
 #plt.show()
 
 # axes = plt.gca()
@@ -81,11 +85,16 @@ def update(frame_num):
         print("showing: " + cur_file)
     
         x,y = read_file(cur_file)
-        newpos = np.array([x,y],np.float64)
-        scat.set_offset_position('data')
-        scat.set_offsets(newpos)
+        fig.clear()
+        scat = plt.scatter(x, y, c='blue',label='start', s=masses, edgecolors='none')
+        plt.xlim(x_min - abs(0.1*x_min),x_max + abs(0.1*x_max))
+        plt.ylim(y_min - abs(0.1*y_min),y_max + abs(0.1*y_max))
+        plt.draw()
+        # newpos = np.array([x,y],np.float64)
+        # scat.set_offset_position('data')
+        # scat.set_offsets(newpos)
 
 animation = FuncAnimation(fig,update,interval=int(1000/speed))    
 
-time.sleep(1)
+#time.sleep(1)
 plt.show()

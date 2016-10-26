@@ -46,7 +46,7 @@ def get_cmap(N):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
 
-file_pattern = "output/dubinski_small_*.out"
+file_pattern = "spec/output/nbody_sim*.out"
 files = sorted(glob.glob(file_pattern))
 if N > len(files) or N <= 0:
     N = 1
