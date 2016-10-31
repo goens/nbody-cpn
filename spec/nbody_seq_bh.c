@@ -36,7 +36,16 @@
 octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t center, real_t length){
     octree_node_t *tree = calloc(1,sizeof(octree_node_t));
     long i;
+    int l;
     for(i=0;i<N;i++){
+        for(l = 0; l <3;l++){
+            if( abs(center.x[l] - particles[i].pos[l]) > length){
+                printf("Error, particle does not fit into domain (center: %ld %ld %ld, length %ld, particle: ", center.x[0],center.x[1],center.x[2],length);
+                particle_pretty_print(particles + i);
+                printf(")\n");
+                exit(1);
+            }
+        }
         octree_insert_node(particles + i, tree, center, length);
     }
     return tree;
@@ -58,6 +67,7 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
             tree->children = calloc(8,sizeof(octree_node_t));
             for(j=0;j<8;j++){
                 tree->children[j].paren = tree;
+                tree->children[j].length = length; /* full length of octant is double the distance from center to edge */
             }
 
             /*        --------------                 */
@@ -335,10 +345,16 @@ void RKstep ( rhs_function_t f, real_t t, real_t *y, real_t *x, real_t h, long N
 void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
     long i,j,l;
     real_t norm;
-	 real_t soft_eps_sq = soft_eps * soft_eps; 
 
     const int n = 6; /*components (2*dimensions) */
     /* printf("executing nbody function with t = %lf",t); */
+    rvector_t zero = { 0., 0., 0.};
+    rvector_t f_i;
+    octree_node_t *tree = octree_generate_tree(N, particles, zero,box_length);
+    /*octree_pretty_print(tree); */
+    /*printf("\n"); */
+    octree_free(tree);
+    
   
     for(i=0;i<N;i++){
         for(l=n*i;l<n*i+n/2;l++) /* the first 3 components */
@@ -346,32 +362,71 @@ void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
         for(l=n*i+n/2;l<n*(i+1);l++) /* the second 3 components (where f will be applied) */
             x[l] = 0; 
         /* if (i==0) printf( "x = %lf. ", x[0]); */
-        for(j=0;j<N;j++){
-            if(i!=j){
-
-                /* rvector_t diff; */
-                /* for(l = 0;l<n/2;l++) diff[l] =  y[n*j+l]-y[n*i+l]; */
-                /* norm = pow(cblas_dnrm2(3,diff,1),3);  */
-					 norm = 0;
-					 for(l = 0; l<n/2;l++){
-						  norm += pow(y[n*j+l]-y[n*i+l],2);
-						  if(norm < soft_eps_sq) /* minimal distance to avoid numeric errors! */
-								norm = soft_eps_sq;
-					 }
-					 norm = pow(norm,3./2.);
-
-                for(l=0;l<n/2;l++){
-                    real_t f_i_j = (particles[j].mass * G_const/norm * (y[n*j+l] - y[n*i+l]));
-                    /* if(i==0 && j==1) printf("f_0_1 = %lf * %lf/%lf * (%lf - %lf) =%lf. ",particles[j].mass , G_const,norm , y[n*j+l] , y[n*i+l],f_i_j); */
-                    x[n*i + n/2 + l] += f_i_j;
-                }
-            }
+        f_i = nbody_bh_calculate_force(particles+i,tree);
+        for(l=0;l<n/2;l++){
+            x[n*i + n/2 + l] += f_i.x[l];
         }
+    }
         /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
+}
+
+void nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t *particle_j, rvector_t *res){
+    real_t norm;
+    int l;
+	 real_t soft_eps_sq = soft_eps * soft_eps; 
+    const int n = 6;
+    norm = 0;
+    for(l = 0; l<n/2;l++){
+        norm += pow(particle_j->pos[l]-particle_i->pos[l],2);
+        if(norm < soft_eps_sq) /* minimal distance to avoid numeric errors! */
+            norm = soft_eps_sq;
+    }
+    norm = pow(norm,3./2.);
+    for(l =0; l<n/2; l++){
+        res->x[l] = (particle_j->mass * G_const/norm * (particle_j->pos[l]-particle_i->pos[l]));
     }
 }
 
+rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
+    rvector_t f = {0., 0., 0.};
+    int i,l;
+    const int n = 6;
 
+    if(tree->particle == NULL)
+        return f;
+
+    if(tree->children == NULL){ /* external node */
+        if(tree->particle == particle){
+            return f; /*  no interaction with itself */
+        }
+        else{ /* calculate particle-particle interaction */
+            nbody_add_particle_particle_interaction(tree->particle,particle,&f);
+        }
+    }
+    else{ /* not external node. see it it should be considered more */
+        real_t ratio = tree->length;
+        real_t diff = 0;
+        for(l=0;l<n/2;l++)
+            diff += pow( tree->particle->pos[l] - particle->pos[l], 2);
+        ratio = ratio / sqrt(diff);
+
+        if(ratio < theta){ /* sufficiently far away, approximate with center of mass */
+            nbody_add_particle_particle_interaction(tree->particle,particle,&f);
+        }
+        else{ /* not far away enough, add the component from all children */
+            for(i=0;i<8;i++){
+                rvector_t temp;
+                temp = nbody_bh_calculate_force(particle,tree->children + i);
+                for(l=0;l<3;l++){
+                    f.x[l] += temp.x[l];
+
+                }
+            }
+        }
+
+    }
+    return f;
+}
 void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *particles){
   long i;
   char output_string[strlen(filename_base) + 15];
@@ -401,7 +456,7 @@ int main(){
 	 /* read particles from file */
 	 /****************************/
 
-	 char *name = "../data/test_octree.tab";
+	 char *name = "../data/dubinski_small.tab";
 	 char *output_file = "output/nbody_sim";
 	 FILE *fp = fopen(name,"r");
 	 
@@ -424,11 +479,6 @@ int main(){
 	 particle_t *particles = calloc(N,sizeof(particle_t));
 	 read_file(fp,particles);
 
-    rvector_t zero = { 0., 0., 0.};
-    octree_node_t *tree = octree_generate_tree(N, particles, zero,10);
-    octree_pretty_print(tree);
-    printf("\n");
-    octree_free(tree);
 	 long i;
 	 /* for(i = 0; i < N; i++){ */
 	 /* 	  printf("x[%ld]: %lf\n",i,particles[i].pos[0]); */
@@ -444,7 +494,7 @@ int main(){
 
 	 real_t *y = calloc(6*N,sizeof(real_t));
 	 /* real_t *x = calloc(6*N,sizeof(real_t)); */
-	 real_t start_t =0, end_t=10, h=0.1;
+	 real_t start_t =start_t_const, end_t=t_end_const, h=h_const;
     real_t t = start_t;
 	 int l;
 

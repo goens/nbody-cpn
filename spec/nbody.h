@@ -2,6 +2,18 @@
 #define __nbody_h__
 #include <string.h>
 
+/* const real_t G_const = 6.67408e-11; */ /* m^3 kg^{-1} s^{-2} */
+/* const real_t G_const = 4.302e-3;*/ /* pc M_sun^{-1}(km/s)^2 */
+#define soft_eps 0.1
+#define G_const 1. 
+#define theta 0.5
+#define box_length 50
+#define start_t_const 0
+#define t_end_const 10
+#define h_const 0.1
+/* const int Order = 4;*/ /* for rk4 */
+/* const real_t eps = 1e-1;*/ /* this is just a wild guess! */
+
 typedef double real_t; 
 typedef struct rvector_s {
     real_t x[3];
@@ -17,6 +29,7 @@ typedef struct particle_t {
 typedef struct octree_node_s octree_node_t;
 
 struct octree_node_s{
+    real_t length;
     particle_t *particle;
     octree_node_t *paren;
     octree_node_t *children;
@@ -31,13 +44,6 @@ typedef struct area_s{
     real_t z_max;
 } area_t;
     
-
-/* const real_t G_const = 6.67408e-11; */ /* m^3 kg^{-1} s^{-2} */
-/* const real_t G_const = 4.302e-3;*/ /* pc M_sun^{-1}(km/s)^2 */
-#define soft_eps 0.1
-#define G_const 1. 
-/* const int Order = 4;*/ /* for rk4 */
-/* const real_t eps = 1e-1;*/ /* this is just a wild guess! */
 
 /* Improvement: use runge-kutta-fehlberg for an evaluation of order 5.
  * see: http://www.aip.de/groups/soe/local/numres/bookcpdf/c16-2.pdf
@@ -89,7 +95,8 @@ void set_euler(int *len_Alpha, real_t *Alpha,
 	 memcpy(Gamma, Gamma_euler,  sizeof Gamma_euler);
 
 }
-
+rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree);
+void nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t *particle_j, rvector_t *res);
 void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t center,real_t length);
 octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t center, real_t length);
 void octree_free(octree_node_t *tree);

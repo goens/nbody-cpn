@@ -288,7 +288,7 @@ int main(){
 
 	 real_t *y = calloc(6*N,sizeof(real_t));
 	 /* real_t *x = calloc(6*N,sizeof(real_t)); */
-	 real_t start_t =0, end_t=10, h=0.1;
+	 real_t start_t =start_t_const, end_t=t_end_const, h=h_const;
     real_t t = start_t;
 	 int l;
 
