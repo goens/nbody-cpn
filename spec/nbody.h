@@ -2,15 +2,35 @@
 #define __nbody_h__
 #include <string.h>
 
-
 typedef double real_t; 
-typedef real_t rvector_t[3];
+typedef struct rvector_s {
+    real_t x[3];
+} rvector_t;
+
 typedef struct particle_t {
-	 rvector_t pos;
-	 rvector_t vel;
+	 real_t pos[3];
+	 real_t vel[3];
 	 real_t mass;
 } particle_t;
 
+
+typedef struct octree_node_s octree_node_t;
+
+struct octree_node_s{
+    particle_t *particle;
+    octree_node_t *paren;
+    octree_node_t *children;
+};
+
+typedef struct area_s{
+    real_t x_min;
+    real_t x_max;
+    real_t y_min;
+    real_t y_max;
+    real_t z_min;
+    real_t z_max;
+} area_t;
+    
 
 /* const real_t G_const = 6.67408e-11; */ /* m^3 kg^{-1} s^{-2} */
 /* const real_t G_const = 4.302e-3;*/ /* pc M_sun^{-1}(km/s)^2 */
@@ -70,6 +90,11 @@ void set_euler(int *len_Alpha, real_t *Alpha,
 
 }
 
+void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t center,real_t length);
+octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t center, real_t length);
+void octree_free(octree_node_t *tree);
+void octree_pretty_print(octree_node_t *tree);
+void particle_pretty_print(particle_t *particle);
 void RKstep ( rhs_function_t f,  real_t t, real_t *y, real_t *ynew, real_t h, long N, particle_t *particles);
 void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles);
 void print_step(real_t t, real_t *y, char *output_filename_base, long N, particle_t *particles);
