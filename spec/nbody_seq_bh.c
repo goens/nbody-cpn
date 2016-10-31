@@ -73,15 +73,15 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
 
             /* decide which octant:                  */
             real_t new_length = length / 2.;
-		printf("length = %lf; new length = %lf\n", length, new_length);
+            /* printf("length = %lf; new length = %lf\n", length, new_length); */
             int octant_index = 4*(particle->pos[0] < center.x[0]) + 2*(particle->pos[1] < center.x[1]) + (particle->pos[2] < center.x[2]);
             rvector_t new_center;
             for(j=0;j<3;j++){
-printf(" {delta = (%lf - %lf)*%lf}", (real_t)(particle->pos[j] < center.x[j]), 1/2. , new_length);
+                /* printf(" {delta = (%lf - %lf)*%lf}", (real_t)(particle->pos[j] < center.x[j]), 1/2. , new_length); */
                 new_center.x[j] = center.x[j] + ((real_t)(particle->pos[j] > center.x[j]) - 1/2.) * new_length;
-		printf(" %lf ",new_center.x[j]);
+                /* printf(" %lf ",new_center.x[j]); */
             }
-printf("\n");
+            /* printf("\n"); */
 
             octree_insert_node(particle,&(tree->children[octant_index]),new_center,new_length);
 
@@ -101,14 +101,14 @@ printf("\n");
 
             /* also for the existing particle */
             octant_index = 4*(tree->particle->pos[0] < center.x[0]) + 2*(tree->particle->pos[1] < center.x[1]) + (tree->particle->pos[2] < center.x[2]);
-		printf("new center for p = [");
-		particle_pretty_print(tree->particle);
-		printf("] = ");
+            /* printf("new center for p = ["); */
+            /* particle_pretty_print(tree->particle); */
+            /* printf("] = "); */
             for(j=0;j<3;j++){
                 new_center.x[j] = center.x[j] + ((real_t)(tree->particle->pos[j] > center.x[j]) - 1/2.) * new_length;
-		printf(" %lf ",new_center.x[j]);
+                /* printf(" %lf ",new_center.x[j]); */
             }
-printf("\n");
+            /* printf("\n"); */
 
             octree_insert_node(tree->particle,&(tree->children[octant_index]),new_center,new_length);
 
@@ -147,18 +147,19 @@ void octree_free(octree_node_t *tree){
     if(tree->particle != NULL && tree->children != NULL){ 
         /* particle is a center of mass particle, free it */
         free(tree->particle);
-	tree->particle = NULL;
+        tree->particle = NULL;
     }
 
     if(tree->children != NULL){
         for(j=0;j<8;j++){
             octree_free(tree->children+j);
         }
-	tree->children=NULL;
+        free(tree->children);
+        tree->children=NULL;
     }
 
-    /* everything else cleaned now */
-    /*free(tree); */ /* this seems to give some trouble now */
+    /* free root node */
+    if(tree->paren == NULL) free(tree);
 }
 
 void octree_pretty_print(octree_node_t *tree){
