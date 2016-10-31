@@ -34,7 +34,7 @@
  */
 
 octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t center, real_t length){
-    octree_node_t *tree = malloc(sizeof(octree_node_t));
+    octree_node_t *tree = calloc(1,sizeof(octree_node_t));
     long i;
     for(i=0;i<N;i++){
         octree_insert_node(particles + i, tree, center, length);
@@ -44,13 +44,18 @@ octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t ce
 
 void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t center,real_t length){
     int j;
+    if(length == 0){
+	printf("error, tried to insert a particle into a volumeless cube\n");
+	exit(1);
+	}
+
 
     if(tree->particle == NULL){ /* unocupied octant */
         tree->particle = particle;
     }
     else{
         if(tree->children == NULL){ /* ocupied octant, leaf: repartition */
-            tree->children = malloc(sizeof(octree_node_t)*8);
+            tree->children = calloc(8,sizeof(octree_node_t));
             for(j=0;j<8;j++){
                 tree->children[j].paren = tree;
             }
@@ -67,18 +72,18 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
             /*   --------------                      */
 
             /* decide which octant:                  */
-            double_t new_length = length / 2.;
+            real_t new_length = length / 2.;
+		printf("length = %lf; new length = %lf\n", length, new_length);
             int octant_index = 4*(particle->pos[0] < center.x[0]) + 2*(particle->pos[1] < center.x[1]) + (particle->pos[2] < center.x[2]);
             rvector_t new_center;
             for(j=0;j<3;j++){
-                new_center.x[j] = center.x[j] + ((particle->pos[j] < center.x[j]) - 1/2.) * new_length;
+printf(" {delta = (%lf - %lf)*%lf}", (real_t)(particle->pos[j] < center.x[j]), 1/2. , new_length);
+                new_center.x[j] = center.x[j] + ((real_t)(particle->pos[j] > center.x[j]) - 1/2.) * new_length;
+		printf(" %lf ",new_center.x[j]);
             }
-            
-            /* also for the existing particle */
-            octant_index = 4*(tree->particle->pos[0] < center.x[0]) + 2*(tree->particle->pos[1] < center.x[1]) + (tree->particle->pos[2] < center.x[2]);
-            for(j=0;j<3;j++){
-                new_center.x[j] = center.x[j] + ((tree->particle->pos[j] < center.x[j]) - 1/2.) * new_length;
-            }
+printf("\n");
+
+            octree_insert_node(particle,&(tree->children[octant_index]),new_center,new_length);
 
             /* /\* check that particles are not the exactly at the same position *\/ */
             /* /\* this is going to be a problem with cpn, better move it to the nbody step *\/ */
@@ -93,7 +98,19 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
             /*     } */
             /* } */
                 
-            octree_insert_node(particle,&(tree->children[octant_index]),new_center,new_length);
+
+            /* also for the existing particle */
+            octant_index = 4*(tree->particle->pos[0] < center.x[0]) + 2*(tree->particle->pos[1] < center.x[1]) + (tree->particle->pos[2] < center.x[2]);
+		printf("new center for p = [");
+		particle_pretty_print(tree->particle);
+		printf("] = ");
+            for(j=0;j<3;j++){
+                new_center.x[j] = center.x[j] + ((real_t)(tree->particle->pos[j] > center.x[j]) - 1/2.) * new_length;
+		printf(" %lf ",new_center.x[j]);
+            }
+printf("\n");
+
+            octree_insert_node(tree->particle,&(tree->children[octant_index]),new_center,new_length);
 
             /* create a center of mass particle */
             particle_t * center_of_mass = malloc(sizeof(particle_t));
@@ -105,10 +122,19 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
             tree->particle = center_of_mass;
         }
         else{ /* tree has children, just update center of mass */
-            tree->particle->mass += particle->mass;
             for(j=0;j<3;j++){
-                tree->particle->pos[j] += particle->mass*particle->pos[j]/tree->particle->mass;
+                tree->particle->pos[j] = (tree->particle->mass * tree->particle->pos[j] + particle->mass*particle->pos[j])/ (tree->particle->mass + particle->mass) ;
             }
+            tree->particle->mass += particle->mass;
+
+            /* insert in subtree */
+            real_t new_length = length / 2.;
+            int octant_index = 4*(particle->pos[0] < center.x[0]) + 2*(particle->pos[1] < center.x[1]) + (particle->pos[2] < center.x[2]);
+            rvector_t new_center;
+            for(j=0;j<3;j++){
+                new_center.x[j] = center.x[j] + ((particle->pos[j] > center.x[j]) - 1/2.) * new_length;
+            }
+            octree_insert_node(particle,&(tree->children[octant_index]),new_center,new_length);
         }
 
     }
@@ -118,25 +144,27 @@ void octree_free(octree_node_t *tree){
     int j;
     if(tree == NULL) return;
 
-    if(tree->particle != NULL && tree-> children != NULL){ 
+    if(tree->particle != NULL && tree->children != NULL){ 
         /* particle is a center of mass particle, free it */
         free(tree->particle);
+	tree->particle = NULL;
     }
 
     if(tree->children != NULL){
         for(j=0;j<8;j++){
-            octree_free(&(tree->children[j]));
+            octree_free(tree->children+j);
         }
+	tree->children=NULL;
     }
 
     /* everything else cleaned now */
-    free(tree);
+    /*free(tree); */ /* this seems to give some trouble now */
 }
 
 void octree_pretty_print(octree_node_t *tree){
     int j = 0;
 
-    if( tree == NULL || tree->particle == NULL) return;
+    if( tree == NULL ) return;
     printf(" (");
     if( tree->particle != NULL){
         printf(" [");
@@ -398,6 +426,7 @@ int main(){
     rvector_t zero = { 0., 0., 0.};
     octree_node_t *tree = octree_generate_tree(N, particles, zero,10);
     octree_pretty_print(tree);
+    printf("\n");
     octree_free(tree);
 	 long i;
 	 /* for(i = 0; i < N; i++){ */
