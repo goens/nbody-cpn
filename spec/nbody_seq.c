@@ -226,7 +226,7 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
   char output_string[strlen(filename_base) + 15];
   strcpy(output_string,filename_base);
   char time[15];
-  sprintf(time,"_%010.6lf.out",t);
+  sprintf(time,"_%010.0lf.out",t*1e6);
   strcat(output_string,time);
   struct stat st = {0};
 
@@ -237,8 +237,8 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
 
   /* fprintf(output_file,"time t = %lf: \n", t); */
 	 for(i=0;i<N;i++){
-	   /* fprintf(output_file,"x = %lf, y = %lf, z = %lf, vx = %lf, vy = %lf, vz = %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5]); */
-        fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5],particles[i].mass);
+        fprintf(output_file,"%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],particles[i].mass); 
+        /* fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5],particles[i].mass); */
 	 }
   fclose(output_file);
 }
@@ -250,7 +250,7 @@ int main(){
 	 /* read particles from file */
 	 /****************************/
 
-	 char *name = "../data/dubinski_small.tab";
+	 char *name = input_filename; 
 	 char *output_file = "output/nbody_sim";
 	 FILE *fp = fopen(name,"r");
 	 

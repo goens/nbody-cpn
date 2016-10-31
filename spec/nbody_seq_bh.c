@@ -198,9 +198,9 @@ void particle_pretty_print(particle_t *particle){
 int read_particle(FILE *fp, particle_t *res){
 	 int ret = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(res->mass), &(res->pos[0]), &(res->pos[1]), &(res->pos[2]), &(res->vel[0]), &(res->vel[0]), &(res->vel[0]));  
     /* testing: no initial velocities */
-	 /* res->vel[0] = 0; */
-	 /* res->vel[1] = 0; */
-	 /* res->vel[2] = 0; */
+	 res->vel[0] = 0;
+	 res->vel[1] = 0;
+	 res->vel[2] = 0;
 	 
 	 return ret;
 }
@@ -364,7 +364,7 @@ void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
         /* if (i==0) printf( "x = %lf. ", x[0]); */
         f_i = nbody_bh_calculate_force(particles+i,tree);
         for(l=0;l<n/2;l++){
-            x[n*i + n/2 + l] += f_i.x[l];
+            x[n*i + n/2 + l] = f_i.x[l];
         }
     }
         /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
@@ -432,7 +432,7 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
   char output_string[strlen(filename_base) + 15];
   strcpy(output_string,filename_base);
   char time[15];
-  sprintf(time,"_%010.6lf.out",t);
+  sprintf(time,".csv.%010.0lf",t*1e6);
   strcat(output_string,time);
   struct stat st = {0};
 
@@ -443,8 +443,10 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
 
   /* fprintf(output_file,"time t = %lf: \n", t); */
 	 for(i=0;i<N;i++){
-	   /* fprintf(output_file,"x = %lf, y = %lf, z = %lf, vx = %lf, vy = %lf, vz = %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5]); */
-        fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5],particles[i].mass);
+        /* fprintf(output_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5],particles[i].mass); */
+        fprintf(output_file,"%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],particles[i].mass); 
+        /* fwrite(y + (6*i),sizeof(real_t),3,output_file); */
+        /* fwrite(&particles[i].mass,sizeof(real_t),1,output_file); */
 	 }
   fclose(output_file);
 }
@@ -456,7 +458,7 @@ int main(){
 	 /* read particles from file */
 	 /****************************/
 
-	 char *name = "../data/dubinski_small.tab";
+	 char *name = input_filename;
 	 char *output_file = "output/nbody_sim";
 	 FILE *fp = fopen(name,"r");
 	 
