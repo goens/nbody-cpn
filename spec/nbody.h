@@ -9,8 +9,8 @@
 #define theta 0.5
 #define box_length 50
 #define start_t_const 0
-#define t_end_const 7
-#define h_const 0.01
+#define t_end_const 10
+#define h_const 0.1
 #define input_filename "../data/dubinski_small.tab" 
 /* const int Order = 4;*/ /* for rk4 */
 /* const real_t eps = 1e-1;*/ /* this is just a wild guess! */
