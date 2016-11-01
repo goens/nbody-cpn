@@ -49,7 +49,7 @@ typedef struct area_s{
 /* Improvement: use runge-kutta-fehlberg for an evaluation of order 5.
  * see: http://www.aip.de/groups/soe/local/numres/bookcpdf/c16-2.pdf
  */
-typedef void (*rhs_function_t) (real_t t, real_t *y, real_t *x,  long N, particle_t *particles); 
+typedef void (*rhs_function_t) (real_t t, particle_t *part_in, particle_t *part_out,  long N); 
 typedef void (*rk_init_function_t) (int *len_Alpha, real_t *Alpha,
 												int *len_Beta, int *height_Beta, real_t *Beta,
 												int *len_Gamma, real_t *Gamma);
@@ -103,7 +103,7 @@ octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t ce
 void octree_free(octree_node_t *tree);
 void octree_pretty_print(octree_node_t *tree);
 void particle_pretty_print(particle_t *particle);
-void RKstep ( rhs_function_t f,  real_t t, real_t *y, real_t *ynew, real_t h, long N, particle_t *particles);
-void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles);
-void print_step(real_t t, real_t *y, char *output_filename_base, long N, particle_t *particles);
+void RKstep ( rhs_function_t f, real_t t, particle_t *particles_out, particle_t *particles_in, real_t h, long N);
+void nbodyprob(real_t t, particle_t *particles_in, particle_t *particles_out, long N);
+void print_step(real_t t, char *output_filename_base, long N, particle_t *particles);
 #endif

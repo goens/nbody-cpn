@@ -123,7 +123,7 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
             octree_insert_node(tree->particle,&(tree->children[octant_index]),new_center,new_length);
 
             /* create a center of mass particle */
-            particle_t * center_of_mass = malloc(sizeof(particle_t));
+            particle_t * center_of_mass = calloc(1,sizeof(particle_t));
             center_of_mass->mass = particle->mass + tree->particle->mass;
             for(j=0;j<3;j++){
                 center_of_mass->pos[j] = (particle-> mass * particle->pos[j] + tree->particle->mass * tree->particle->pos[j])/center_of_mass->mass;
@@ -156,7 +156,7 @@ void octree_free(octree_node_t *tree){
 
     if(tree->particle != NULL && tree->children != NULL){ 
         /* particle is a center of mass particle, free it */
-        free(tree->particle);
+        free(tree->particle); 
         tree->particle = NULL;
     }
 
@@ -212,7 +212,7 @@ void read_file(FILE* fp, particle_t *particles){
 }
 
 
-void RKstep ( rhs_function_t f, real_t t, real_t *y, real_t *x, real_t h, long N, particle_t *particles){
+void RKstep( rhs_function_t f, real_t t, particle_t *particles_out, particle_t *particles_in, real_t h, long N){
   
   long i,j,l;
   /* indices for: 
@@ -238,63 +238,59 @@ void RKstep ( rhs_function_t f, real_t t, real_t *y, real_t *x, real_t h, long N
   /* rvector_t *e; */
   /* real_t eps2,c; */
 
-  real_t *ynew = calloc(n*N, sizeof(real_t));
-  real_t *sum =  calloc(n*N, sizeof(real_t));
-  real_t **K = calloc(m,sizeof(real_t *));
+  particle_t *part_new = calloc(N, sizeof(particle_t));
+  particle_t *sum =  calloc(N, sizeof(particle_t));
+  particle_t **K = calloc(m,sizeof(particle_t *));
   for(j=0;j<m;j++){
-		K[j] = calloc(n*N,sizeof(real_t));
-  }/* like: K[m][n*N];  this way K[0] ... K[m-1] are arrays of length N*n */
+		K[j] = calloc(N,sizeof(particle_t));
+  }/* like: K[m][n*N];  this way K[0] ... K[m-1] are arrays of length N */
 
   /* do{ */ /*this one is for the adaptive version */
 	 
-    /* init step */ /* unnecesary when using calloc! */
-	 /* for(i=0;i<N;i++){ */
-		  /* for(l=n*i;l<n*(i+1);l++) */
-		  /* 		sum[l] = 0; */
-
-		  /* for(l=n*i;l<n*(i+1);l++) */
-        /*     for(j=0;j<m;j++) */
-        /*         K[j][l] = 0; */
-	 /* } */
-
 	 /* execute the ODE function m times */
 	 for(j=0;j<m;j++){
 
 		  for(i=0;i<N;i++)
-				for(l=n*i;l<n*(i+1);l++){
-					 ynew[l] = y[l];
+				for(l=0;l<n/2;l++){
+					 part_new[i].pos[l] = particles_in[i].pos[l]; 
+					 part_new[i].vel[l] = particles_in[i].vel[l]; 
 		  }
 		  /* update the arguments to calculate the next K[j] */
 		  for(i=0;i<N;i++){
 
 		  
-				for(l=n*i;l<n*(i+1);l++){
-					 sum[l] = 0;
+				for(l=0;l<3;l++){
+					 sum[i].pos[l] = 0;
+					 sum[i].vel[l] = 0;
+
 					 for(k=0;k<j;k++){
-						  sum[l]+= Beta[j*m+k]*K[k][l];
+						  sum[i].pos[l] += Beta[j*m+k]*(K[k]+i)->pos[l];
+						  sum[i].vel[l] += Beta[j*m+k]*K[k][i].vel[l];
 					 }
-					 /* ynew[l] += h * sum[l] */
-					 /* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
-					 ynew[l] += h * sum[l];
+					 part_new[i].pos[l] += h * sum[i].pos[l];
+					 part_new[i].vel[l] += h * sum[i].vel[l];
+						  
 				}
 		  }
-		  (*f)(t + Alpha[j] * h, ynew,(real_t *) &K[j][0], N, particles); /* K[j] = (*f)(t + Alpha[j] * h, ynew + (h * sum)); */
+		  (*f)(t + Alpha[j] * h, part_new,(particle_t *) &K[j][0], N); /* K[j] = (*f)(t + Alpha[j] * h, ynew + (h * sum)); */
 		  /*printf("finished. K[%ld][0] = %lf\n",j,K[j][0]); */
 	 } 
 
  
 	 for(i=0;i<N;i++){
 
-	   for(l=n*i;l<n*(i+1);l++){
-				sum[l] = 0;
+	   for(l=0;l<3;l++){
+			 sum[i].pos[l] = 0;
+			 sum[i].vel[l] = 0;
 
 		  for(j=0;j<m;j++){
          /* if(i==0) */
          /*     printf("sum[%ld] = %lf*%lf\n",l,Gamma[j],K[j][l]); */
-				sum[l]+=Gamma[j]*K[j][l]; //could rewrite in atlas
+				sum[i].pos[l]+=Gamma[j]*K[j][i].pos[l]; //could rewrite in atlas
 		  }
 
-		   ynew[l] = y[l] + h*sum[l]; //atlas?
+		   part_new[i].pos[l] = particles_in[i].pos[l] + h*sum[i].pos[l]; //atlas?
+		   part_new[i].vel[l] = particles_in[i].vel[l] + h*sum[i].vel[l]; //atlas?
          /* if(i==0) */
          /*     printf("ynew[%ld] = %lf + %lf*%lf\n",l,y[l],h,sum[l]); */
 	   }
@@ -327,44 +323,45 @@ void RKstep ( rhs_function_t f, real_t t, real_t *y, real_t *x, real_t h, long N
 
 	 /* update results after calculating */
 	 for(i=0;i<N;i++)
-		  for(l=n*i;l<n*(i+1);l++)
-				x[l] = ynew[l];
+		  for(l=0;l<n/2;l++){
+				particles_out[i].pos[l] = part_new[i].pos[l];
+				particles_out[i].vel[l] = part_new[i].vel[l];
+		  }
 	 
 	 /* clean up */
 
 	 for(j=0;j<m;j++){
 		  free(K[j]);
 	 }
-	 free(ynew);
+	 free(part_new);
 	 free(sum);
 	 free(K);
 
 }
 
 /* explicitly not inplace to be able to convert it easier to cpn */
-void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
-    long i,j,l;
-    real_t norm;
+void nbodyprob(real_t t, particle_t *particles_in, particle_t *particles_out, long N){
+    long i,l;
 
     const int n = 6; /*components (2*dimensions) */
     /* printf("executing nbody function with t = %lf",t); */
-    rvector_t zero = { 0., 0., 0.};
+    rvector_t zero = {{ 0., 0., 0.}};
     rvector_t f_i;
-    octree_node_t *tree = octree_generate_tree(N, particles, zero,box_length);
+    octree_node_t *tree = octree_generate_tree(N, particles_in, zero,box_length);
     /*octree_pretty_print(tree); */
     /*printf("\n"); */
     
   
     for(i=0;i<N;i++){
-        for(l=n*i;l<n*i+n/2;l++) /* the first 3 components */
-            x[l] = y[n/2+l];  
+        for(l=0;l<n/2;l++) /* the first 3 components */
+            particles_out[i].pos[l] = particles_in[i].vel[l];  
         for(l=n*i+n/2;l<n*(i+1);l++) /* the second 3 components (where f will be applied) */
-            x[l] = 0; 
+            particles_out[i].vel[l] = 0;
         /* if (i==0) printf( "x = %lf. ", x[0]); */
-        f_i = nbody_bh_calculate_force(particles+i,tree);
+        f_i = nbody_bh_calculate_force(particles_in+i,tree);
 		  /* printf("f[%ld]=(%lf,%lf,%lf)",i,f_i.x[0],f_i.x[1],f_i.x[2]); */
         for(l=0;l<n/2;l++){
-            x[n*i + n/2 + l] = f_i.x[l];
+            particles_out[i].vel[l] = f_i.x[l];
         }
     }
 
@@ -390,7 +387,7 @@ void nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t 
 }
 
 rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
-    rvector_t f = {0., 0., 0.};
+    rvector_t f = {{0., 0., 0.}};
     int i,l;
     const int n = 6;
 
@@ -429,7 +426,7 @@ rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
     }
     return f;
 }
-void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *particles){
+void print_step(real_t t, char *filename_base, long N, particle_t *particles){
   long i;
   char output_string[strlen(filename_base) + 15];
   strcpy(output_string,filename_base);
@@ -445,8 +442,7 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
 
   /* fprintf(output_file,"time t = %lf: \n", t); */
 	 for(i=0;i<N;i++){
-        /* fprintf(output_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5],particles[i].mass); */
-        fprintf(output_file,"%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],particles[i].mass); 
+        fprintf(output_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",particles[i].mass,particles[i].pos[0],particles[i].pos[1],particles[i].pos[2],particles[i].vel[0],particles[i].vel[1],particles[i].vel[2]);
         /* fwrite(y + (6*i),sizeof(real_t),3,output_file); */
         /* fwrite(&particles[i].mass,sizeof(real_t),1,output_file); */
 	 }
@@ -479,15 +475,10 @@ int main(){
 	 }
 	 rewind(fp);
 
-	 printf("read a file with %ld particles\n",N);
 	 particle_t *particles = calloc(N,sizeof(particle_t));
 	 read_file(fp,particles);
+	 printf("read a file with %ld particles\n",N);
 
-	 long i;
-	 /* for(i = 0; i < N; i++){ */
-	 /* 	  printf("x[%ld]: %lf\n",i,particles[i].pos[0]); */
-	 /* } */
-	 
 	 /*******************************/
 	 /* solve differential equation */
 	 /*******************************/
@@ -496,44 +487,34 @@ int main(){
 	 rhs_function_t f;
 	 /* here we could do it inplace but this way it is easier to convert to cpn */
 
-	 real_t *y = calloc(6*N,sizeof(real_t));
+	 /* real_t *y = calloc(6*N,sizeof(real_t)); */
 	 /* real_t *x = calloc(6*N,sizeof(real_t)); */
 	 real_t start_t =start_t_const, end_t=t_end_const, h=h_const;
     real_t t = start_t;
-	 int l;
-
-    /* for(i=0;i<6*N;i++) x[i] = 0; */
-    for(i=0;i<N;i++){ 
-        /* printf("particles[%ld].x = %lf",i,particles[i].pos[0]); */
-		  for(l=0;l<3;l++){
-            y[6*i+l] = particles[i].pos[l];
-            y[6*i+3+l] = particles[i].vel[l];
-        }
-    }
 
 
 	 f = &nbodyprob;
 
-    print_step(t, y, output_file,N,particles); 
+    print_step(t, output_file,N,particles); 
 
 	 while(t+h < end_t){
 		
-		  RKstep(f,t,y,y,h,N,particles);
+		  RKstep(f,t,particles,particles,h,N);
 		
 		  printf("RKstep done: t = %lf\n", t); 
 
-		  print_step(t, y, output_file,N,particles); 
+		  print_step(t, output_file,N,particles); 
 
         t+= h; /* for the non-adapting version */
 		  if(t >= end_t){ 
 				t = end_t;
 		  }
 	 }
-	 RKstep(f,t,y,y,h,N,particles);
+	 RKstep(f,t,particles,particles,h,N);
 
 	 printf("last RKstep done: t = %lf\n", t);
 
-	 print_step(t, y,output_file,N,particles); 
+	 print_step(t, output_file,N,particles); 
 
 
 	 /************/

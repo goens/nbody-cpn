@@ -328,10 +328,10 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t_chan, real_t y_chan[
 	 
 	 __PNin(N_chan){ N = N_chan; }
 	 printf("reading masses for nbdoy...");
-	 real_t *masses = malloc(N*sizeof(real_t));
+	 real_t *particles = malloc(N*sizeof(particle_t));
 	 for(i = 0; i < N; i++){
 		  __PNin(mass){
-				masses[i] = mass;
+				particles[i].mass = mass;
 		  }
 	 }
 	 printf("done.\n");
@@ -357,27 +357,7 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t_chan, real_t y_chan[
 				for(l=n*i+n/2;l<n*(i+1);l++) /* the second 3 components (where f will be applied) */
 					 x[l] = 0; 
 				/* if (i==0) printf( "x = %lf. ", x[0]); */
-				for(j=0;j<N;j++){
-					 if(i!=j){
-
-						  /* rvector_t diff; */
-						  /* for(l = 0;l<n/2;l++) diff[l] =  y[n*j+l]-y[n*i+l]; */
-						  /* norm = pow(cblas_dnrm2(3,diff,1),3);  */
-						  norm = 0;
-						  for(l = 0; l<n/2;l++){
-								norm += pow(y[n*j+l]-y[n*i+l],2);
-						  }
-						  if (norm < soft_eps_sq)
-								norm = soft_eps_sq; /* minimal distance for numerical issues */
-						  norm = pow(norm,3./2.);
-
-						  for(l=0;l<n/2;l++){
-								real_t f_i_j = (masses[j] * G_const/norm * (y[n*j+l] - y[n*i+l]));
-								/* if(i==0 && j==1) printf("f_0_1 = %lf * %lf/%lf * (%lf - %lf) =%lf. ",particles[j].mass , G_const,norm , y[n*j+l] , y[n*i+l],f_i_j); */
-								x[n*i + n/2 + l] += f_i_j;
-						  }
-					 }
-				}
+				f_i = nbody_bh_calculate_force(particles+i,tree);
 		  }
 		  /* printf("outputing nbody f..."); */
 		  for(i=0;i<N;i++){
@@ -429,7 +409,7 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 				/* printf("printint to file at time t = %lf: \n", t);  */
 				for(i=0;i<N;i++){
 					 __PNin(y){
-						  fprintf(output_file,"%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],masses[i]); 
+						  fprintf(output_file,"%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",masses[i],y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5]); 
 					 /* fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[0],y[1],y[2],y[3],y[4],y[5],masses[i]); */
 					 }
 				}
