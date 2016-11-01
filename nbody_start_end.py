@@ -21,10 +21,10 @@ def read_file(filename):
     masses = []
     
     for line in open(filename):
-        values = line.split()
+        values = line.split(',')
         x.append(float(values[0]))
         y.append(float(values[1]))
-        masses.append(float(values[6]))
+        masses.append(float(values[3]))
     return x,y
 
 def get_masses(filename):
@@ -32,8 +32,8 @@ def get_masses(filename):
     masses = []
     
     for line in open(filename):
-        values = line.split()
-        masses.append(float(values[6]))
+        values = line.split(',')
+        masses.append(float(values[3]))
     return masses
 
 #http://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
@@ -46,7 +46,7 @@ def get_cmap(N):
         return scalar_map.to_rgba(index)
     return map_index_to_rgb_color
 
-file_pattern = "spec/output/nbody_sim*.out"
+file_pattern = "spec/output/nbody_sim*"
 files = sorted(glob.glob(file_pattern))
 if N > len(files) or N <= 0:
     N = 1

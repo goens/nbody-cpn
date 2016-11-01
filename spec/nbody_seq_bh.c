@@ -40,7 +40,7 @@ octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t ce
     for(i=0;i<N;i++){
         for(l = 0; l <3;l++){
             if( abs(center.x[l] - particles[i].pos[l]) > length){
-                printf("Error, particle does not fit into domain (center: %ld %ld %ld, length %ld, particle: ", center.x[0],center.x[1],center.x[2],length);
+                printf("Error, particle does not fit into domain (center: %lf %lf %lf, length %lf, particle: ", center.x[0],center.x[1],center.x[2],length);
                 particle_pretty_print(particles + i);
                 printf(")\n");
                 exit(1);
@@ -353,7 +353,6 @@ void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
     octree_node_t *tree = octree_generate_tree(N, particles, zero,box_length);
     /*octree_pretty_print(tree); */
     /*printf("\n"); */
-    octree_free(tree);
     
   
     for(i=0;i<N;i++){
@@ -363,10 +362,13 @@ void nbodyprob(real_t t, real_t *y, real_t *x, long N, particle_t *particles){
             x[l] = 0; 
         /* if (i==0) printf( "x = %lf. ", x[0]); */
         f_i = nbody_bh_calculate_force(particles+i,tree);
+		  /* printf("f[%ld]=(%lf,%lf,%lf)",i,f_i.x[0],f_i.x[1],f_i.x[2]); */
         for(l=0;l<n/2;l++){
             x[n*i + n/2 + l] = f_i.x[l];
         }
     }
+
+    octree_free(tree);
         /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
 }
 

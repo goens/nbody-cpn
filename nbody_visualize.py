@@ -16,10 +16,10 @@ def read_file(filename):
     masses = []
     
     for line in open(filename):
-        values = line.split()
+        values = line.split(',')
         x.append(float(values[0]))
         y.append(float(values[1]))
-        masses.append(float(values[6]))
+        masses.append(float(values[3]))
     return x,y
 
 def get_masses(filename):
@@ -27,11 +27,11 @@ def get_masses(filename):
     masses = []
     
     for line in open(filename):
-        values = line.split()
-        masses.append(float(values[6]))
+        values = line.split(',')
+        masses.append(float(values[3]))
     return masses
 
-file_pattern = "spec/output/nbody_sim*.out"
+file_pattern = "spec/output/nbody_sim*"
 files = sorted(glob.glob(file_pattern))
 
 x_min = 0
