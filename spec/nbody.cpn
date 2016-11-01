@@ -36,226 +36,6 @@
 /* inline seems to be unsupported? */
 /*because of the fp I can't make this guy into a process, so I'll inline it */
 
-octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t center, real_t length){
-    octree_node_t *tree = calloc(1,sizeof(octree_node_t));
-    long i;
-    int l;
-    for(i=0;i<N;i++){
-        for(l = 0; l <3;l++){
-            if( abs(center.x[l] - particles[i].pos[l]) > length){
-                printf("Error, particle does not fit into domain (center: %ld %ld %ld, length %ld, particle: ", center.x[0],center.x[1],center.x[2],length);
-                particle_pretty_print(particles + i);
-                printf(")\n");
-                exit(1);
-            }
-        }
-        octree_insert_node(particles + i, tree, center, length);
-    }
-    return tree;
-}
-
-void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t center,real_t length){
-    int j;
-    if(length == 0){
-	printf("error, tried to insert a particle into a volumeless cube\n");
-	exit(1);
-	}
-
-
-    if(tree->particle == NULL){ /* unocupied octant */
-        tree->particle = particle;
-    }
-    else{
-        if(tree->children == NULL){ /* ocupied octant, leaf: repartition */
-            tree->children = calloc(8,sizeof(octree_node_t));
-            for(j=0;j<8;j++){
-                tree->children[j].paren = tree;
-                tree->children[j].length = length; /* full length of octant is double the distance from center to edge */
-            }
-
-            /*        --------------                 */
-            /*      / |  3  |  7  /|                 */
-            /*     /  -----------/--                 */
-            /*    /   |  2  |  6/  |                 */
-            /*   /   ----------/---   z              */
-            /*   --------------   /    ^  ^y         */
-            /*   |  1  |  5   |  /     | /           */
-            /*   -------------- /      |/            */
-            /*   |  0  |  4   |/        --> x        */
-            /*   --------------                      */
-
-            /* decide which octant:                  */
-            real_t new_length = length / 2.;
-            /* printf("length = %lf; new length = %lf\n", length, new_length); */
-            int octant_index = 4*(particle->pos[0] < center.x[0]) + 2*(particle->pos[1] < center.x[1]) + (particle->pos[2] < center.x[2]);
-            rvector_t new_center;
-            for(j=0;j<3;j++){
-                /* printf(" {delta = (%lf - %lf)*%lf}", (real_t)(particle->pos[j] < center.x[j]), 1/2. , new_length); */
-                new_center.x[j] = center.x[j] + ((real_t)(particle->pos[j] > center.x[j]) - 1/2.) * new_length;
-                /* printf(" %lf ",new_center.x[j]); */
-            }
-            /* printf("\n"); */
-
-            octree_insert_node(particle,&(tree->children[octant_index]),new_center,new_length);
-
-            /* /\* check that particles are not the exactly at the same position *\/ */
-            /* /\* this is going to be a problem with cpn, better move it to the nbody step *\/ */
-            /* int equal = 1; */
-            /* for(j=0;j<3;j++){ */
-            /*     equal = equal && (tree->particle->pos[j] == particle->pos[j]); */
-            /* } */
-            /* if(equal){ */
-            /*     for(j=0;j<3;j++){ */
-            /*         tree->particle->pos[j] += soft_eps; */
-            /*         particle->pos[j] -= soft_eps; */
-            /*     } */
-            /* } */
-                
-
-            /* also for the existing particle */
-            octant_index = 4*(tree->particle->pos[0] < center.x[0]) + 2*(tree->particle->pos[1] < center.x[1]) + (tree->particle->pos[2] < center.x[2]);
-            /* printf("new center for p = ["); */
-            /* particle_pretty_print(tree->particle); */
-            /* printf("] = "); */
-            for(j=0;j<3;j++){
-                new_center.x[j] = center.x[j] + ((real_t)(tree->particle->pos[j] > center.x[j]) - 1/2.) * new_length;
-                /* printf(" %lf ",new_center.x[j]); */
-            }
-            /* printf("\n"); */
-
-            octree_insert_node(tree->particle,&(tree->children[octant_index]),new_center,new_length);
-
-            /* create a center of mass particle */
-            particle_t * center_of_mass = malloc(sizeof(particle_t));
-            center_of_mass->mass = particle->mass + tree->particle->mass;
-            for(j=0;j<3;j++){
-                center_of_mass->pos[j] = (particle-> mass * particle->pos[j] + tree->particle->mass * tree->particle->pos[j])/center_of_mass->mass;
-                center_of_mass->vel[j] = 0; /* init, but this value has no meaning */
-            }
-            tree->particle = center_of_mass;
-        }
-        else{ /* tree has children, just update center of mass */
-            for(j=0;j<3;j++){
-                tree->particle->pos[j] = (tree->particle->mass * tree->particle->pos[j] + particle->mass*particle->pos[j])/ (tree->particle->mass + particle->mass) ;
-            }
-            tree->particle->mass += particle->mass;
-
-            /* insert in subtree */
-            real_t new_length = length / 2.;
-            int octant_index = 4*(particle->pos[0] < center.x[0]) + 2*(particle->pos[1] < center.x[1]) + (particle->pos[2] < center.x[2]);
-            rvector_t new_center;
-            for(j=0;j<3;j++){
-                new_center.x[j] = center.x[j] + ((particle->pos[j] > center.x[j]) - 1/2.) * new_length;
-            }
-            octree_insert_node(particle,&(tree->children[octant_index]),new_center,new_length);
-        }
-
-    }
-}
-
-void octree_free(octree_node_t *tree){
-    int j;
-    if(tree == NULL) return;
-
-    if(tree->particle != NULL && tree->children != NULL){ 
-        /* particle is a center of mass particle, free it */
-        free(tree->particle);
-        tree->particle = NULL;
-    }
-
-    if(tree->children != NULL){
-        for(j=0;j<8;j++){
-            octree_free(tree->children+j);
-        }
-        free(tree->children);
-        tree->children=NULL;
-    }
-
-    /* free root node */
-    if(tree->paren == NULL) free(tree);
-}
-
-void octree_pretty_print(octree_node_t *tree){
-    int j = 0;
-
-    if( tree == NULL ) return;
-    printf(" (");
-    if( tree->particle != NULL){
-        printf(" [");
-        particle_pretty_print(tree->particle);
-        printf("] ");
-    }
-    if(tree->children != NULL){
-        for(j=0;j<8;j++){
-            octree_pretty_print(&(tree->children[j]));
-        }
-    }
-    printf(")");
-
-}
-
-void nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t *particle_j, rvector_t *res){
-    real_t norm;
-    int l;
-	 real_t soft_eps_sq = soft_eps * soft_eps; 
-    const int n = 6;
-    norm = 0;
-    for(l = 0; l<n/2;l++){
-        norm += pow(particle_j->pos[l]-particle_i->pos[l],2);
-        if(norm < soft_eps_sq) /* minimal distance to avoid numeric errors! */
-            norm = soft_eps_sq;
-    }
-    norm = pow(norm,3./2.);
-    for(l =0; l<n/2; l++){
-        res->x[l] = (particle_j->mass * G_const/norm * (particle_j->pos[l]-particle_i->pos[l]));
-    }
-}
-
-rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
-    rvector_t f = {0., 0., 0.};
-    int i,l;
-    const int n = 6;
-
-    if(tree->particle == NULL)
-        return f;
-
-    if(tree->children == NULL){ /* external node */
-        if(tree->particle == particle){
-            return f; /*  no interaction with itself */
-        }
-        else{ /* calculate particle-particle interaction */
-            nbody_add_particle_particle_interaction(tree->particle,particle,&f);
-        }
-    }
-    else{ /* not external node. see it it should be considered more */
-        real_t ratio = tree->length;
-        real_t diff = 0;
-        for(l=0;l<n/2;l++)
-            diff += pow( tree->particle->pos[l] - particle->pos[l], 2);
-        ratio = ratio / sqrt(diff);
-
-        if(ratio < theta){ /* sufficiently far away, approximate with center of mass */
-            nbody_add_particle_particle_interaction(tree->particle,particle,&f);
-        }
-        else{ /* not far away enough, add the component from all children */
-            for(i=0;i<8;i++){
-                rvector_t temp;
-                temp = nbody_bh_calculate_force(particle,tree->children + i);
-                for(l=0;l<3;l++){
-                    f.x[l] += temp.x[l];
-
-                }
-            }
-        }
-
-    }
-    return f;
-}
-
-void particle_pretty_print(particle_t *particle){
-    printf("%lf %lf %lf %lf %lf %lf %lf", particle->mass, particle->pos[0], particle->pos[1], particle->pos[2],particle->vel[0],particle->vel[1],particle->vel[2]);
-}
-
 
 __PNkpn Read_file __PNin (char filename[50])
 	 __PNout( real_t mass, real_t y_zero[6], long N){
@@ -539,11 +319,11 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 
 }
 
-__PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t, real_t y_chan[6])
+__PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t_chan, real_t y_chan[6])
 	 __PNout(real_t x_chan[6]){
 	 long N;
     long i,j,l;
-    real_t norm;
+    real_t norm, t;
 	 const real_t soft_eps_sq = soft_eps * soft_eps;
 	 
 	 __PNin(N_chan){ N = N_chan; }
@@ -565,6 +345,7 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t, real_t y_chan[6])
 		  /*__PNin(y:N) __PNout(x:N){*/ /*I would actually like to do this*/
 		  
 		  for(i=0;i<N;i++){
+				__PNin(t_chan){ t = t_chan;}
 				__PNin(y_chan){
 					 for(l=0;l<n/2;l++){ /* the first 3 components */
 						  y[n*i+l] = y_chan[l];
@@ -640,7 +421,7 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 	 while(1){
 		  __PNin(t){
 				char time[15];
-				sprintf(time,"_%010.6lf.out",t);
+				sprintf(time,".csv.%010.0lf",t*1e6);
 				strcpy(output_string,output_string_base);
 				strcat(output_string,time);
 
@@ -648,8 +429,8 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 				/* printf("printint to file at time t = %lf: \n", t);  */
 				for(i=0;i<N;i++){
 					 __PNin(y){
-					 /* fprintf(output_file,"x = %lf, y = %lf, z = %lf, vx = %lf, vy = %lf, vz = %lf \n",y[6*i+0],y[6*i+1],y[6*i+2],y[6*i+3],y[6*i+4],y[6*i+5]); */
-					 fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[0],y[1],y[2],y[3],y[4],y[5],masses[i]);
+						  fprintf(output_file,"%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],masses[i]); 
+					 /* fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[0],y[1],y[2],y[3],y[4],y[5],masses[i]); */
 					 }
 				}
 				fclose(output_file);
@@ -665,7 +446,7 @@ __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_i
 	 char output_file[] = "output/nbody_sim";
 	 long N,i;
 
-	 real_t start_t =0, end_t=10, h=0.1;
+	 real_t start_t =start_t_const, end_t=t_end_const, h=h_const;
     real_t t = start_t;
 	 int l;
 

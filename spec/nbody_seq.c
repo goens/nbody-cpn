@@ -226,7 +226,7 @@ void print_step(real_t t, real_t *y, char *filename_base, long N, particle_t *pa
   char output_string[strlen(filename_base) + 15];
   strcpy(output_string,filename_base);
   char time[15];
-  sprintf(time,"_%010.0lf.out",t*1e6);
+  sprintf(time,".csv.%010.0lf",t*1e6);
   strcat(output_string,time);
   struct stat st = {0};
 
