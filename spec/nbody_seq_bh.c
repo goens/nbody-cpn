@@ -365,7 +365,7 @@ void nbodyprob(real_t t, particle_t *particles_in, particle_t *particles_out, lo
         }
     }
 
-    octree_free(tree);
+    /* octree_free(tree); */
         /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
 }
 
