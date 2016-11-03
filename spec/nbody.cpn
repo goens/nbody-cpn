@@ -427,6 +427,9 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 				strcat(output_string,time);
 
 				FILE *output_file = fopen(output_string,"w");
+		    if(output_file == NULL){
+				  printf("An error ocurred while reading the file: %s\n", output_string);
+		    }
 				/* printf("printint to file at time t = %lf: \n", t);  */
 				for(i=0;i<N;i++){
 					 __PNin(y){
@@ -443,7 +446,7 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_in, real_t h_in) __PNout(char filename[50], char output_filename_base[50], real_t y[6], real_t t_chan, real_t h_chan){
 
 	 /* initalization */
-	 char name[] = input_filename ;
+	 char name[] = input_filename;
 	 char output_file[] = "output/nbody_sim";
 	 long N,i;
 
