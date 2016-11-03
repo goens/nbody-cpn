@@ -420,7 +420,7 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 	 }
 	 while(1){
 		  __PNin(t){
-				printf("writing %lf",t);
+				/* printf("writing %lf",t); */
 				char time[15];
 				sprintf(time,".csv.%010.0lf",t);
 				strcpy(output_string,output_string_base);
@@ -480,10 +480,10 @@ __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_i
 		  }
 	 }
 
-	 printf("first rkstep done (scheduled).\n");
+	 /* printf("first rkstep done (scheduled).\n"); */
 	 while(t+h <  end_t){
 
-		  printf("starting RKstep...\n");
+		  /* printf("starting RKstep...\n"); */
 		  __PNin(t_in,h_in) __PNout(t_chan,h_chan){
 				/* t = t_in; */
 				h = h_in;
