@@ -420,8 +420,9 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 	 }
 	 while(1){
 		  __PNin(t){
+				printf("writing %lf",t);
 				char time[15];
-				sprintf(time,".csv.%010.0lf",t*1e6);
+				sprintf(time,".csv.%010.0lf",t);
 				strcpy(output_string,output_string_base);
 				strcat(output_string,time);
 
@@ -429,7 +430,7 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 				/* printf("printint to file at time t = %lf: \n", t);  */
 				for(i=0;i<N;i++){
 					 __PNin(y){
-						  fprintf(output_file,"%lf,%lf,%lf,%lf\n",y[6*i+0],y[6*i+1],y[6*i+2],masses[i]); 
+						  fprintf(output_file,"%lf,%lf,%lf,%lf\n",masses[i],y[0],y[1],y[2],y[3],y[4],y[5]); 
 					 /* fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[0],y[1],y[2],y[3],y[4],y[5],masses[i]); */
 					 }
 				}
@@ -442,7 +443,7 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_in, real_t h_in) __PNout(char filename[50], char output_filename_base[50], real_t y[6], real_t t_chan, real_t h_chan){
 
 	 /* initalization */
-	 char name[] = "data/dubinski_small.tab";
+	 char name[] = input_filename ;
 	 char output_file[] = "output/nbody_sim";
 	 long N,i;
 

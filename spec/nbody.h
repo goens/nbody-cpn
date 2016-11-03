@@ -5,13 +5,13 @@
 /* const real_t G_const = 6.67408e-11; */ /* m^3 kg^{-1} s^{-2} */
 /* const real_t G_const = 4.302e-3;*/ /* pc M_sun^{-1}(km/s)^2 */
 #define soft_eps 0.1
-#define G_const 1. 
-#define theta 0.5
-#define box_length 50
+#define G_const 6.67408e-11
+#define theta 0.01
+#define box_length 10e12
 #define start_t_const 0
-#define t_end_const 10
-#define h_const 0.1
-#define input_filename "../data/dubinski_small.tab" 
+#define t_end_const 15778000.0
+#define h_const 25000.0
+#define input_filename "../data/planets_1.tab" 
 /* const int Order = 4;*/ /* for rk4 */
 /* const real_t eps = 1e-1;*/ /* this is just a wild guess! */
 
