@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +36,7 @@
 
 octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t center, real_t length){
     octree_node_t *tree = calloc(1,sizeof(octree_node_t));
+	 tree->length = length*2;
     long i;
     int l;
     for(i=0;i<N;i++){
@@ -54,7 +56,9 @@ octree_node_t * octree_generate_tree(long N, particle_t *particles, rvector_t ce
 void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t center,real_t length){
     int j;
     if(length == 0){
-	printf("error, tried to insert a particle into a volumeless cube\n");
+	printf("error, tried to insert a particle into a volumeless cube. p = [");
+	particle_pretty_print(particle);
+	printf("]\n");
 	exit(1);
 	}
 
@@ -125,6 +129,7 @@ void octree_insert_node(particle_t *particle, octree_node_t *tree, rvector_t cen
             /* create a center of mass particle */
             particle_t * center_of_mass = calloc(1,sizeof(particle_t));
             center_of_mass->mass = particle->mass + tree->particle->mass;
+				assert(center_of_mass->mass > 0);
             for(j=0;j<3;j++){
                 center_of_mass->pos[j] = (particle-> mass * particle->pos[j] + tree->particle->mass * tree->particle->pos[j])/center_of_mass->mass;
                 center_of_mass->vel[j] = 0; /* init, but this value has no meaning */
@@ -198,9 +203,9 @@ void particle_pretty_print(particle_t *particle){
 int read_particle(FILE *fp, particle_t *res){
 	 int ret = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(res->mass), &(res->pos[0]), &(res->pos[1]), &(res->pos[2]), &(res->vel[0]), &(res->vel[0]), &(res->vel[0]));  
     /* testing: no initial velocities */
-	 res->vel[0] = 0;
-	 res->vel[1] = 0;
-	 res->vel[2] = 0;
+	 /* res->vel[0] = 0; */
+	 /* res->vel[1] = 0; */
+	 /* res->vel[2] = 0; */
 	 
 	 return ret;
 }
@@ -254,6 +259,7 @@ void RKstep( rhs_function_t f, real_t t, particle_t *particles_out, particle_t *
 				for(l=0;l<n/2;l++){
 					 part_new[i].pos[l] = particles_in[i].pos[l]; 
 					 part_new[i].vel[l] = particles_in[i].vel[l]; 
+					 part_new[i].mass = particles_in[i].mass;
 		  }
 		  /* update the arguments to calculate the next K[j] */
 		  for(i=0;i<N;i++){
@@ -272,7 +278,7 @@ void RKstep( rhs_function_t f, real_t t, particle_t *particles_out, particle_t *
 						  
 				}
 		  }
-		  (*f)(t + Alpha[j] * h, part_new,(particle_t *) &K[j][0], N); /* K[j] = (*f)(t + Alpha[j] * h, ynew + (h * sum)); */
+		  (*f)(t + Alpha[j] * h, (particle_t *) &K[j][0],part_new, N); /* K[j] = (*f)(t + Alpha[j] * h, ynew + (h * sum)); */
 		  /*printf("finished. K[%ld][0] = %lf\n",j,K[j][0]); */
 	 } 
 
@@ -340,7 +346,7 @@ void RKstep( rhs_function_t f, real_t t, particle_t *particles_out, particle_t *
 }
 
 /* explicitly not inplace to be able to convert it easier to cpn */
-void nbodyprob(real_t t, particle_t *particles_in, particle_t *particles_out, long N){
+void nbodyprob(real_t t, particle_t *particles_out, particle_t *particles_in, long N){
     long i,l;
 
     const int n = 6; /*components (2*dimensions) */
@@ -348,8 +354,9 @@ void nbodyprob(real_t t, particle_t *particles_in, particle_t *particles_out, lo
     rvector_t zero = {{ 0., 0., 0.}};
     rvector_t f_i;
     octree_node_t *tree = octree_generate_tree(N, particles_in, zero,box_length);
-    /*octree_pretty_print(tree); */
-    /*printf("\n"); */
+    /* octree_pretty_print(tree); */
+    /* printf("\n"); */
+    /* printf("\n"); */
     
   
     for(i=0;i<N;i++){
@@ -359,17 +366,21 @@ void nbodyprob(real_t t, particle_t *particles_in, particle_t *particles_out, lo
             particles_out[i].vel[l] = 0;
         /* if (i==0) printf( "x = %lf. ", x[0]); */
         f_i = nbody_bh_calculate_force(particles_in+i,tree);
-		  /* printf("f[%ld]=(%lf,%lf,%lf)",i,f_i.x[0],f_i.x[1],f_i.x[2]); */
+		  if(i==0){
+		  		printf("\nf[%ld]=(%lf,%lf,%lf)",i,f_i.x[0],f_i.x[1],f_i.x[2]);
+		  }
         for(l=0;l<n/2;l++){
             particles_out[i].vel[l] = f_i.x[l];
         }
+		  /* printf("vz[%ld]:%lf, ",i,particles_out[i].vel[2]); */
     }
 
-    /* octree_free(tree); */
+    octree_free(tree);
         /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
 }
 
-void nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t *particle_j, rvector_t *res){
+rvector_t nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t *particle_j){
+	 rvector_t res = {{0.,0.,0.}};
     real_t norm;
     int l;
 	 real_t soft_eps_sq = soft_eps * soft_eps; 
@@ -382,14 +393,19 @@ void nbody_add_particle_particle_interaction(particle_t *particle_i, particle_t 
     }
     norm = pow(norm,3./2.);
     for(l =0; l<n/2; l++){
-        res->x[l] = (particle_j->mass * G_const/norm * (particle_j->pos[l]-particle_i->pos[l]));
+        res.x[l] += (particle_j->mass * G_const/norm * (particle_j->pos[l]-particle_i->pos[l]));
+		  /* printf("{res+=%lf}",(particle_j->mass * G_const/norm * (particle_j->pos[l]-particle_i->pos[l]))); */
     }
+	 /* if( res.x[0] != 0 || res.x[1] != 0 || res.x[2] != 0 ) */
+	 /* 	  printf("(%lf,%lf,%lf)..",res.x[0],res.x[1],res.x[2]); */
+	 return res;
 }
 
 rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
     rvector_t f = {{0., 0., 0.}};
     int i,l;
     const int n = 6;
+	 rvector_t temp;
 
     if(tree->particle == NULL)
         return f;
@@ -399,7 +415,11 @@ rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
             return f; /*  no interaction with itself */
         }
         else{ /* calculate particle-particle interaction */
-            nbody_add_particle_particle_interaction(tree->particle,particle,&f);
+            temp = nbody_add_particle_particle_interaction(tree->particle,particle);
+				for(l=0;l<3;l++){
+					 f.x[l] += temp.x[l];
+
+				}
         }
     }
     else{ /* not external node. see it it should be considered more */
@@ -410,15 +430,16 @@ rvector_t nbody_bh_calculate_force(particle_t *particle, octree_node_t *tree){
         ratio = ratio / sqrt(diff);
 
         if(ratio < theta){ /* sufficiently far away, approximate with center of mass */
-            nbody_add_particle_particle_interaction(tree->particle,particle,&f);
+            temp = nbody_add_particle_particle_interaction(tree->particle,particle);
+				for(l=0;l<3;l++){
+					 f.x[l] += temp.x[l];
+				}
         }
         else{ /* not far away enough, add the component from all children */
             for(i=0;i<8;i++){
-                rvector_t temp;
                 temp = nbody_bh_calculate_force(particle,tree->children + i);
                 for(l=0;l<3;l++){
                     f.x[l] += temp.x[l];
-
                 }
             }
         }
