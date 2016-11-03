@@ -8,7 +8,7 @@ import time
 #http://matplotlib.org/examples/mplot3d/scatter3d_demo.html
 
 speed = 12
-mass_multiplicator = 2
+mass_multiplicator = 2 
 def read_file(filename):
     
     x = []
@@ -17,9 +17,9 @@ def read_file(filename):
     
     for line in open(filename):
         values = line.split(',')
-        x.append(float(values[0]))
-        y.append(float(values[1]))
-        masses.append(float(values[3]))
+        x.append(float(values[1]))
+        y.append(float(values[2]))
+        masses.append(float(values[0]))
     return x,y
 
 def get_masses(filename):
@@ -28,7 +28,7 @@ def get_masses(filename):
     
     for line in open(filename):
         values = line.split(',')
-        masses.append(float(values[3]))
+        masses.append(float(values[0]))
     return masses
 
 file_pattern = "spec/output/nbody_sim*"
@@ -63,7 +63,7 @@ fig = plt.figure()
 
 #ax = fig.add_axes([x_min,y_min,width,height ])
 #ax = fig.add_axes([0,-100,20,200])
-scat = plt.scatter(x, y, c='blue',label='start', s=masses, edgecolors='none')
+scat = plt.scatter(x, y, c='blue',label='start', edgecolors='none') #,s=masses)
 plt.xlim(x_min - abs(0.1*x_min),x_max + abs(0.1*x_max))
 plt.ylim(y_min - abs(0.1*y_min),y_max + abs(0.1*y_max))
 plt.draw()

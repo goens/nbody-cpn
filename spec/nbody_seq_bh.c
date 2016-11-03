@@ -167,14 +167,15 @@ void octree_free(octree_node_t *tree){
 
     if(tree->children != NULL){
         for(j=0;j<8;j++){
-            octree_free(tree->children+j);
+            octree_free(&tree->children[j]);
         }
         free(tree->children);
         tree->children=NULL;
     }
 
     /* free root node */
-    if(tree->paren == NULL) free(tree);
+    if(tree->paren == NULL)
+		  free(tree);
 }
 
 void octree_pretty_print(octree_node_t *tree){
@@ -362,7 +363,7 @@ void nbodyprob(real_t t, particle_t *particles_out, particle_t *particles_in, lo
     for(i=0;i<N;i++){
         for(l=0;l<n/2;l++) /* the first 3 components */
             particles_out[i].pos[l] = particles_in[i].vel[l];  
-        for(l=n*i+n/2;l<n*(i+1);l++) /* the second 3 components (where f will be applied) */
+        for(l=0;l<n/2;l++) /* the second 3 components (where f will be applied) */
             particles_out[i].vel[l] = 0;
         /* if (i==0) printf( "x = %lf. ", x[0]); */
         f_i = nbody_bh_calculate_force(particles_in+i,tree);
