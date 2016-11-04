@@ -42,17 +42,26 @@ __PNkpn Read_file __PNin (char filename[50])
 
 	 FILE *fp;
 	 particle_t part; 
-	 long i = 0;
+#ifdef READ_FROM_ARRAY
+   long i;
+#else
+	 long read_status = 0;
+#endif
 
 
 	 __PNin(filename){
+#ifndef READ_FROM_ARRAY
 		  fp = fopen(filename,"r");
 		  if(fp == NULL){
 				printf("An error ocurred while reading the file: %s\n", filename);
 		  }
+#endif
 	 }
 
 	 __PNout(N){ 
+#ifdef READ_FROM_ARRAY
+     N = num_particles;
+#else
 		  /* a bit inefficient: determine the number of lines first for allocation */
 		  while(!feof(fp))
 		  {
@@ -63,24 +72,36 @@ __PNkpn Read_file __PNin (char filename[50])
 				}
 		  }
 		  rewind(fp);
+#endif
 	 }
 
-	 i = 7;
-	 while(i == 7){
-		  i = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(part.mass), &(part.pos[0]), &(part.pos[1]), &(part.pos[2]), &(part.vel[0]), &(part.vel[0]), &(part.vel[0]));  
-		  __PNout(mass){
-				mass = part.mass;
-		  }
+#ifdef READ_FROM_ARRAY
+  for (i = 0; i < num_particles; ++i) {
+    part.mass = particles[i][0];
+    part.pos[0] = particles[i][1];
+    part.pos[1] = particles[i][2];
+    part.pos[2] = particles[i][3];
+    part.vel[0] = particles[i][4];
+    part.vel[1] = particles[i][5];
+    part.vel[2] = particles[i][6];
+#else
+  read_status = 7;
+  while(read_status == 7){
+    read_status = fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf\n", &(part.mass),
+        &(part.pos[0]), &(part.pos[1]), &(part.pos[2]),
+        &(part.vel[0]), &(part.vel[1]), &(part.vel[2]));
+#endif
+    __PNout(mass) { mass = part.mass; }
 
-		  __PNout(y_zero){
-				int l;
-				for(l=0;l<3;l++){
-					 y_zero[l] = part.pos[l];
-					 y_zero[l+3] = part.vel[l];
-				}
-				/* printf("x{%lf} ", part.pos[0]); */
-		  }
-	 }
+    __PNout(y_zero){
+      int l;
+      for(l=0;l<3;l++){
+        y_zero[l] = part.pos[l];
+        y_zero[l+3] = part.vel[l];
+      }
+      /* printf("x{%lf} ", part.pos[0]); */
+    }
+  }
 }
 
 /* hard coded array sizes. K for the biggest RK we might include */
@@ -409,9 +430,11 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 	 real_t *masses = malloc(N*sizeof(real_t));
 	 struct stat st = {0};
 
+#ifdef OUTPUT_TO_FILE
 	 if (stat("output", &st) == -1) {
 		  mkdir("output", 0700);
 	 }
+#endif
 
 	 for(i = 0; i < N; i++){
 		  __PNin(mass){
@@ -426,18 +449,24 @@ __PNkpn Print_step __PNin(char filename_base_chan[50], long N_chan, real_t mass,
 				strcpy(output_string,output_string_base);
 				strcat(output_string,time);
 
+#ifdef OUTPUT_TO_FILE
 				FILE *output_file = fopen(output_string,"w");
 		    if(output_file == NULL){
 				  printf("An error ocurred while reading the file: %s\n", output_string);
 		    }
+#endif
 				/* printf("printint to file at time t = %lf: \n", t);  */
 				for(i=0;i<N;i++){
 					 __PNin(y){
-						  fprintf(output_file,"%lf,%lf,%lf,%lf\n",masses[i],y[0],y[1],y[2],y[3],y[4],y[5]); 
+#ifdef OUTPUT_TO_FILE
+						  fprintf(output_file,"%lf,%lf,%lf,%lf\n",masses[i],y[0],y[1],y[2],y[3],y[4],y[5]);
 					 /* fprintf(output_file,"%lf %lf %lf %lf %lf %lf %lf \n",y[0],y[1],y[2],y[3],y[4],y[5],masses[i]); */
+#endif
 					 }
 				}
+#ifdef OUTPUT_TO_FILE
 				fclose(output_file);
+#endif
 		  }
 	 }
 	 free(masses);

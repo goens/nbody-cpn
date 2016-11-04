@@ -9,9 +9,18 @@
 #define theta 0.01
 #define box_length 10e12
 #define start_t_const 0
-#define t_end_const 15778000.0
-#define h_const 25000.0
-#define input_filename "../data/planets_1.tab" 
+#define t_end_const 10.
+#define h_const 0.1
+#define input_filename "../data/dubinski_small.tab"
+
+// #define READ_FROM_ARRAY
+
+#ifdef READ_FROM_ARRAY
+#include "dubinski_tiny.h"
+#endif
+
+#define OUTPUT_TO_FILE
+
 /* const int Order = 4;*/ /* for rk4 */
 /* const real_t eps = 1e-1;*/ /* this is just a wild guess! */
 
