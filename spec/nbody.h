@@ -9,9 +9,9 @@
 #define theta 0.01
 #define box_length 10e12
 #define start_t_const 0
-#define t_end_const 10.
-#define h_const 0.1
-#define input_filename "../data/dubinski_small.tab"
+#define t_end_const 11750000.0
+#define h_const 25000.0
+#define input_filename "../data/planets_1.tab" 
 
 // #define READ_FROM_ARRAY
 
