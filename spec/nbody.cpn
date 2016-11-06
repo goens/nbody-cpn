@@ -175,12 +175,13 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 						  /* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 						  y_fn1[l] += h * sum[l];
 					 }
-
-					 __PNout(t_fn1){
-						  t_fn1 = t + Alpha[j] * h;
-					 }
 				}
 		  }
+
+		  __PNout(t_fn1){
+				t_fn1 = t + Alpha[j] * h;
+		  }
+
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
 				__PNin(f_t_y1){
 					 for(l=0;l<6;l++){
@@ -209,11 +210,12 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 								y_fn2[l] += h * sum[l];
 						  }
-						  __PNout(t_fn2){
-						  t_fn2 = t + Alpha[j] * h;
-						  }
 					 }
 				}
+				__PNout(t_fn2){
+					 t_fn2 = t + Alpha[j] * h;
+				}
+
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
 				__PNin(f_t_y2){
 					 for(l=0;l<6;l++){
@@ -242,10 +244,10 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 								y_fn3[l] += h * sum[l];
 						  }
-						  __PNout(t_fn3){
-								t_fn3 = t + Alpha[j] * h;
-						  }
 					 }
+				}
+				__PNout(t_fn3){
+					 t_fn3 = t + Alpha[j] * h;
 				}
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
 				__PNin(f_t_y3){
@@ -276,10 +278,10 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 								/* cblas_daxpy(n,h,&sum[l],1,&ynew[l],1); */
 								y_fn4[l] += h * sum[l];
 						  }
-						  __PNout(t_fn4){
-								t_fn4 = t + Alpha[j] * h;
-						  }
 					 }
+				}
+				__PNout(t_fn4){
+					 t_fn4 = t + Alpha[j] * h;
 				}
 		  for(i=0;i<N;i++){ /* this should be divided when having multiple workers! */
 				__PNin(f_t_y4){
@@ -348,50 +350,50 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 
 }
 
-__PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t_chan, real_t y_chan[6])
-	 __PNout(real_t x_chan[6]){
-	 long N;
-    long i,j,l;
-    real_t norm, t;
-	 const real_t soft_eps_sq = soft_eps * soft_eps;
-	 
-	 __PNin(N_chan){ N = N_chan; }
-	 printf("reading masses for nbdoy...");
-	 real_t *masses = malloc(N*sizeof(real_t));
-	 for(i = 0; i < N; i++){
-		  __PNin(mass){
-				masses[i] = mass;
-		  }
-	 }
-	 printf("done.\n");
-    const int n = 6; /*components (2*dimensions) */
-    /* printf("executing nbody function with t = %lf",t); */
 
-	 real_t *x = malloc(N*n*sizeof(real_t));
+__PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_chan[6], real_t t_chan, long i_chan)
+	 __PNout(real_t f_i_j[3]){
+	 long j,N;
+	 int l;
+	 real_t norm, last_t = -1;
+    const int n = 6; /*components (2*dimensions) */
+	 const real_t soft_eps_sq = soft_eps * soft_eps;
+
+	 __PNin(N_chan){ N = N_chan; }
+	 /* printf("reading masses for nbdoy..."); */
+	 real_t *masses = malloc(N*sizeof(real_t));
 	 real_t *y = malloc(N*n*sizeof(real_t));
 
-	 while(1){ 
-		  /*__PNin(y:N) __PNout(x:N){*/ /*I would actually like to do this*/
-		  
-		  for(i=0;i<N;i++){
-				__PNin(t_chan){ t = t_chan;}
-				__PNin(y_chan){
-					 for(l=0;l<n/2;l++){ /* the first 3 components */
-						  y[n*i+l] = y_chan[l];
-						  y[n*i+n/2+l] = y_chan[n/2+l];
-						  /* if(i==4 && l ==0) printf("y_chan_%ld[%d]: %e\n",i,n/2+l,y_chan[n/2+l]); */
-						  x[n*i+l] = y_chan[n/2+l];  
-					 }
+	 for(j = 0; j < N; j++){
+		  __PNin(mass){
+				masses[j] = mass;
+		  }
+	 }
+	 /* printf("done.\n"); */
+	 
+	 while(1){
+		  __PNin(t_chan){
+				if(t_chan != last_t){
+					 /* printf("updating n_sq internal y to time %lf\n",t_chan); */
+					 for(j=0;j<N;j++){
+						  __PNin(y_chan){
+								for(l=0;l<n/2;l++){ /* the first 3 components */
+									 y[n*j+l] = y_chan[l];
+									 y[n*j+n/2+l] = y_chan[n/2+l];
+								}
 
+						  }
+					 }
+					 last_t = t_chan;
 				}
 		  }
-		  for(i=0;i<N;i++){
-				for(l=n*i+n/2;l<n*(i+1);l++) /* the second 3 components (where f will be applied) */
-					 x[l] = 0; 
-				/* if (i==0) printf( "x = %lf. ", x[0]); */
+		  __PNin(i_chan) __PNout(f_i_j){
+				for(l=0;l<n/2;l++){
+					 f_i_j[l] = 0 ;
+				}
+	 
 				for(j=0;j<N;j++){
-					 if(i!=j){
-
+					 if(i_chan != j){
 						  /* rvector_t diff; */
 						  /* for(l = 0;l<n/2;l++) diff[l] =  y[n*j+l]-y[n*i+l]; */
 						  /* norm = pow(cblas_dnrm2(3,diff,1),3);  */
@@ -399,7 +401,7 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t_chan, real_t y_chan[
 						  for(l = 0; l<n/2;l++){
 								/* if(i==3) */
 								/* 	 printf("y_%ld[%d](%e) - y_%ld[%d](%e) = %e\n",j,l,y[n*j+l],i,l,y[n*i+l],pow(y[n*j+l]-y[n*i+l],2)); */
-								norm += pow(y[n*j+l]-y[n*i+l],2);
+								norm += pow(y[n*j+l]-y[n*i_chan+l],2);
 								/* if(i==3) */
 								/* 	 printf("norm[%d]: %e\n",l,norm); */
 						  }
@@ -407,30 +409,67 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t mass, real_t t_chan, real_t y_chan[
 								norm = soft_eps_sq; /* minimal distance for numerical issues */
 						  norm = pow(norm,3./2.);
 								/* if(i==3) printf("finally: %e\n",norm); */
-
-
 						  for(l=0;l<n/2;l++){
-								real_t f_i_j = (masses[j] * G_const/norm * (y[n*j+l] - y[n*i+l]));
-								/* if(i==3) printf("f_%ld_%ld = %e * %e/%e * (%e - %e) =%e.\n ",i,j,masses[j], G_const,norm , y[n*j+l] , y[n*i+l],f_i_j); */
-								x[n*i + n/2 + l] += f_i_j;
+								f_i_j[l] += (masses[j] * G_const/norm * (y[n*j+l] - y[n*i_chan+l]));
+								/* printf("f_%ld_%ld = %e * %e/%e * (%e - %e) =%e.\n ",i_chan,j,masses[j], G_const,norm , y[n*j+l] , y[n*i_chan+l],f_i_j[l]); */
 						  }
 						  /* if(i==3) printf("x[%ld] = %e %e %e %e %e %e.\n ",i,x[n*j+0] ,x[n*j+1] ,x[n*j+2] ,x[n*j+3] ,x[n*j+4] ,x[n*j+5]); */
 					 }
 				}
 		  }
-		  /* printf("outputing nbody f..."); */
-		  for(i=0;i<N;i++){
-				__PNout(x_chan){
-					 for(l=0;l<n;l++)
-						  x_chan[l] = x[n*i+l];
-					 /* if(i == 3) printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
-				}
-		  }
-		  /* printf("f done.\n"); */
-		  /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
 	 }
 	 free(masses);
 	 free(y);
+}
+
+__PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_i_j[3])
+	 __PNout(long i_calc, real_t t_calc, real_t x_chan[6]){
+	 long N;
+    long i,l;
+    real_t norm, t;
+	 
+	 __PNin(N_chan){ N = N_chan; }
+    const int n = 6; /*components (2*dimensions) */
+    /* printf("executing nbody function with t = %lf",t); */
+
+	 real_t *x = malloc(N*n*sizeof(real_t));
+
+	 while(1){ 
+		  /*__PNin(y:N) __PNout(x:N){*/ /*I would actually like to do this*/
+
+		  __PNin(t_chan){ t = t_chan;}
+		  for(i=0;i<N;i++){
+				__PNin(y_chan){
+					 for(l=0;l<n/2;l++){ 
+						  x[n*i+l] = y_chan[n/2+l];  
+						  x[n*i+n/2+l] = 0; 
+					 }
+
+				}
+		  }
+
+		  for(i=0;i<N;i++){
+				__PNout(t_calc, i_calc){
+					 /* call n_sq_calc */
+					 i_calc = i;
+					 t_calc = t;
+				}
+				__PNin(f_i_j){
+					 /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
+				__PNout(x_chan){
+					 for(l=0;l<n/2;l++){
+						  x[n*i + n/2 + l] = f_i_j[l];
+						  x_chan[l] = x[n*i+l];
+						  x_chan[l+n/2] = x[n*i+n/2+l];
+					 }
+					 /* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
+				}
+				}
+		  }
+		  /* printf("outputing nbody f..."); */
+		  /* printf("f done.\n"); */
+		  /* if (i== 0) printf( " (af. int.) x[0] = %lf. ", x[0]); */
+	 }
 	 free(x);
 }
 
@@ -573,7 +612,9 @@ __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_i
 
 __PNchannel real_t y[6], y_read[6], y_fn1[6],y_fn2[6], y_fn3[6],y_fn4[6], f_t_y1[6], f_t_y2[6], f_t_y3[6], f_t_y4[6],y_tilde[6];
 __PNchannel real_t mass,t,h,t_fn1,t_fn2,t_fn3,t_fn4,t_tilde, h_tilde;
-__PNchannel long n;
+__PNchannel real_t f_i_j1[3], f_i_j2[3], f_i_j3[3], f_i_j4[3]; 
+__PNchannel real_t t_calc1, t_calc2, t_calc3, t_calc4; 
+__PNchannel long i1,i2,i3,i4,n;
 __PNchannel char filename[50],output_filename_base[50];
 
 __PNprocess reader = Read_file 
@@ -588,18 +629,34 @@ __PNprocess writer = Print_step
 	 __PNin(output_filename_base, n, mass, t_tilde, y_tilde);
 
 /* need 4 nbodies for rk4 */
-__PNprocess nbody = Nbodyprob 
-	 __PNin(n,mass,t_fn1,y_fn1)
-	 __PNout(f_t_y1);
+__PNprocess nbody1 = Nbodyprob 
+	 __PNin(n,t_fn1,y_fn1,f_i_j1)
+	 __PNout(i1,t_calc1,f_t_y1);
+
+__PNprocess n_sq_calc1 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc1,i1)
+	 __PNout(f_i_j1);
+
 __PNprocess nbody2 = Nbodyprob 
-	 __PNin(n,mass,t_fn2,y_fn2)
-	 __PNout(f_t_y2);
+	 __PNin(n,t_fn2,y_fn2,f_i_j2)
+	 __PNout(i2,t_calc2,f_t_y2);
+__PNprocess n_sq_calc2 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn2,t_calc2,i2)
+	 __PNout(f_i_j2);
+
 __PNprocess nbody3 = Nbodyprob 
-	 __PNin(n,mass,t_fn3,y_fn3)
-	 __PNout(f_t_y3);
+	 __PNin(n,t_fn3,y_fn3,f_i_j3)
+	 __PNout(i3,t_calc3,f_t_y3);
+__PNprocess n_sq_calc3 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn3,t_calc3,i3)
+	 __PNout(f_i_j3);
+
 __PNprocess nbody4 = Nbodyprob 
-	 __PNin(n,mass,t_fn4,y_fn4)
-	 __PNout(f_t_y4);
+	 __PNin(n,t_fn4,y_fn4,f_i_j4)
+	 __PNout(i4,t_calc4,f_t_y4);
+__PNprocess n_sq_calc4 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn4,t_calc4,i4)
+	 __PNout(f_i_j4);
 
 /* here we could do parallel rk steps! (dlp) */
 __PNprocess rk = RKStep 
