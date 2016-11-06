@@ -427,6 +427,7 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 	 long N;
     long i,l;
     real_t norm, t;
+	 int unread = 0;
 	 
 	 __PNin(N_chan){ N = N_chan; }
     const int n = 6; /*components (2*dimensions) */
@@ -457,6 +458,41 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 						  icalc1 = i;
 						  t_calc1 = t;
 					 }
+					 i++;
+					 unread++;
+				} /* end worker */
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc2, icalc2){
+						  /* call n_sq_calc */
+						  icalc2 = i;
+						  t_calc2 = t;
+					 }
+					 i++;
+					 unread++;
+				} /* end worker */
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc3, icalc3){
+						  /* call n_sq_calc */
+						  icalc3 = i;
+						  t_calc3 = t;
+					 }
+					 i++;
+					 unread++;
+				} /* end worker */
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc4, icalc4){
+						  /* call n_sq_calc */
+						  icalc4 = i;
+						  t_calc4 = t;
+					 }
+					 i++;
+					 unread++;
+				} /* end worker */
+				
+				if(unread > 0){
 					 __PNin(f_i_j1){
 						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
 						  __PNout(x_chan){
@@ -468,15 +504,9 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
 						  }
 					 }
-					 i++;
-				} /* end worker */
-
-				if(N-i > 0 ){ /* begin worker */
-					 __PNout(t_calc2, icalc2){
-						  /* call n_sq_calc */
-						  icalc2 = i;
-						  t_calc2 = t;
-					 }
+					 unread--;
+				}
+				if(unread > 0){
 					 __PNin(f_i_j2){
 						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
 						  __PNout(x_chan){
@@ -488,15 +518,9 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
 						  }
 					 }
-					 i++;
-				} /* end worker */
-
-				if(N-i > 0 ){ /* begin worker */
-					 __PNout(t_calc3, icalc3){
-						  /* call n_sq_calc */
-						  icalc3 = i;
-						  t_calc3 = t;
-					 }
+					 unread--;
+				}
+				if(unread > 0){
 					 __PNin(f_i_j3){
 						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
 						  __PNout(x_chan){
@@ -508,15 +532,9 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
 						  }
 					 }
-					 i++;
-				} /* end worker */
-
-				if(N-i > 0 ){ /* begin worker */
-					 __PNout(t_calc4, icalc4){
-						  /* call n_sq_calc */
-						  icalc4 = i;
-						  t_calc4 = t;
-					 }
+					 unread--;
+				}
+				if(unread > 0){
 					 __PNin(f_i_j4){
 						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
 						  __PNout(x_chan){
@@ -528,8 +546,8 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
 						  }
 					 }
-					 i++;
-				} /* end worker */
+					 unread--;
+				}
 		  }
 		  /* printf("outputing nbody f..."); */
 		  /* printf("f done.\n"); */
