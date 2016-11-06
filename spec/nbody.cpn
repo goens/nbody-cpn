@@ -351,7 +351,7 @@ __PNkpn RKStep __PNin( real_t t_chan, real_t h_chan, real_t f_t_y1[6], real_t f_
 }
 
 
-__PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_chan[6], real_t t_chan, long i_chan)
+__PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_chan[6], real_t t_chan, long ichan)
 	 __PNout(real_t f_i_j[3]){
 	 long j,N;
 	 int l;
@@ -387,13 +387,13 @@ __PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_cha
 					 last_t = t_chan;
 				}
 		  }
-		  __PNin(i_chan) __PNout(f_i_j){
+		  __PNin(ichan) __PNout(f_i_j){
 				for(l=0;l<n/2;l++){
 					 f_i_j[l] = 0 ;
 				}
 	 
 				for(j=0;j<N;j++){
-					 if(i_chan != j){
+					 if(ichan != j){
 						  /* rvector_t diff; */
 						  /* for(l = 0;l<n/2;l++) diff[l] =  y[n*j+l]-y[n*i+l]; */
 						  /* norm = pow(cblas_dnrm2(3,diff,1),3);  */
@@ -401,7 +401,7 @@ __PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_cha
 						  for(l = 0; l<n/2;l++){
 								/* if(i==3) */
 								/* 	 printf("y_%ld[%d](%e) - y_%ld[%d](%e) = %e\n",j,l,y[n*j+l],i,l,y[n*i+l],pow(y[n*j+l]-y[n*i+l],2)); */
-								norm += pow(y[n*j+l]-y[n*i_chan+l],2);
+								norm += pow(y[n*j+l]-y[n*ichan+l],2);
 								/* if(i==3) */
 								/* 	 printf("norm[%d]: %e\n",l,norm); */
 						  }
@@ -410,8 +410,8 @@ __PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_cha
 						  norm = pow(norm,3./2.);
 								/* if(i==3) printf("finally: %e\n",norm); */
 						  for(l=0;l<n/2;l++){
-								f_i_j[l] += (masses[j] * G_const/norm * (y[n*j+l] - y[n*i_chan+l]));
-								/* printf("f_%ld_%ld = %e * %e/%e * (%e - %e) =%e.\n ",i_chan,j,masses[j], G_const,norm , y[n*j+l] , y[n*i_chan+l],f_i_j[l]); */
+								f_i_j[l] += (masses[j] * G_const/norm * (y[n*j+l] - y[n*ichan+l]));
+								/* printf("f_%ld_%ld = %e * %e/%e * (%e - %e) =%e.\n ",ichan,j,masses[j], G_const,norm , y[n*j+l] , y[n*ichan+l],f_i_j[l]); */
 						  }
 						  /* if(i==3) printf("x[%ld] = %e %e %e %e %e %e.\n ",i,x[n*j+0] ,x[n*j+1] ,x[n*j+2] ,x[n*j+3] ,x[n*j+4] ,x[n*j+5]); */
 					 }
@@ -422,8 +422,8 @@ __PNkpn Nbody_n_sq_calculate_force __PNin(long N_chan, real_t mass, real_t y_cha
 	 free(y);
 }
 
-__PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_i_j[3])
-	 __PNout(long i_calc, real_t t_calc, real_t x_chan[6]){
+__PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_i_j1[3], real_t f_i_j2[3], real_t f_i_j3[3], real_t f_i_j4[3])
+	 __PNout(long icalc1, long icalc2, long icalc3, long icalc4,real_t t_calc1,  real_t t_calc2,real_t t_calc3,real_t t_calc4,   real_t x_chan[6]){
 	 long N;
     long i,l;
     real_t norm, t;
@@ -448,23 +448,88 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], real_t f_
 				}
 		  }
 
-		  for(i=0;i<N;i++){
-				__PNout(t_calc, i_calc){
-					 /* call n_sq_calc */
-					 i_calc = i;
-					 t_calc = t;
-				}
-				__PNin(f_i_j){
-					 /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
-				__PNout(x_chan){
-					 for(l=0;l<n/2;l++){
-						  x[n*i + n/2 + l] = f_i_j[l];
-						  x_chan[l] = x[n*i+l];
-						  x_chan[l+n/2] = x[n*i+n/2+l];
+		  i = 0;
+		  while(i<N){
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc1, icalc1){
+						  /* call n_sq_calc */
+						  icalc1 = i;
+						  t_calc1 = t;
 					 }
-					 /* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
-				}
-				}
+					 __PNin(f_i_j1){
+						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
+						  __PNout(x_chan){
+								for(l=0;l<n/2;l++){
+									 x[n*i + n/2 + l] = f_i_j1[l];
+									 x_chan[l] = x[n*i+l];
+									 x_chan[l+n/2] = x[n*i+n/2+l];
+								}
+								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
+						  }
+					 }
+					 i++;
+				} /* end worker */
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc2, icalc2){
+						  /* call n_sq_calc */
+						  icalc2 = i;
+						  t_calc2 = t;
+					 }
+					 __PNin(f_i_j2){
+						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
+						  __PNout(x_chan){
+								for(l=0;l<n/2;l++){
+									 x[n*i + n/2 + l] = f_i_j2[l];
+									 x_chan[l] = x[n*i+l];
+									 x_chan[l+n/2] = x[n*i+n/2+l];
+								}
+								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
+						  }
+					 }
+					 i++;
+				} /* end worker */
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc3, icalc3){
+						  /* call n_sq_calc */
+						  icalc3 = i;
+						  t_calc3 = t;
+					 }
+					 __PNin(f_i_j3){
+						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
+						  __PNout(x_chan){
+								for(l=0;l<n/2;l++){
+									 x[n*i + n/2 + l] = f_i_j3[l];
+									 x_chan[l] = x[n*i+l];
+									 x_chan[l+n/2] = x[n*i+n/2+l];
+								}
+								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
+						  }
+					 }
+					 i++;
+				} /* end worker */
+
+				if(N-i > 0 ){ /* begin worker */
+					 __PNout(t_calc4, icalc4){
+						  /* call n_sq_calc */
+						  icalc4 = i;
+						  t_calc4 = t;
+					 }
+					 __PNin(f_i_j4){
+						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
+						  __PNout(x_chan){
+								for(l=0;l<n/2;l++){
+									 x[n*i + n/2 + l] = f_i_j4[l];
+									 x_chan[l] = x[n*i+l];
+									 x_chan[l+n/2] = x[n*i+n/2+l];
+								}
+								/* printf("output: x[%ld]: %e,%e,%e,%e,%e,%e\n",i,x_chan[0],x_chan[1],x_chan[2],x_chan[3],x_chan[4],x_chan[5]); */
+						  }
+					 }
+					 i++;
+				} /* end worker */
 		  }
 		  /* printf("outputing nbody f..."); */
 		  /* printf("f done.\n"); */
@@ -612,9 +677,9 @@ __PNkpn Control __PNin(real_t y_read[6], long N_chan, real_t y_in[6], real_t t_i
 
 __PNchannel real_t y[6], y_read[6], y_fn1[6],y_fn2[6], y_fn3[6],y_fn4[6], f_t_y1[6], f_t_y2[6], f_t_y3[6], f_t_y4[6],y_tilde[6];
 __PNchannel real_t mass,t,h,t_fn1,t_fn2,t_fn3,t_fn4,t_tilde, h_tilde;
-__PNchannel real_t f_i_j1[3], f_i_j2[3], f_i_j3[3], f_i_j4[3]; 
-__PNchannel real_t t_calc1, t_calc2, t_calc3, t_calc4; 
-__PNchannel long i1,i2,i3,i4,n;
+__PNchannel real_t f_i_j1_1[3], f_i_j2_1[3], f_i_j3_1[3], f_i_j4_1[3], f_i_j1_2[3], f_i_j2_2[3], f_i_j3_2[3], f_i_j4_2[3], f_i_j1_3[3], f_i_j2_3[3], f_i_j3_3[3], f_i_j4_3[3], f_i_j1_4[3], f_i_j2_4[3], f_i_j3_4[3], f_i_j4_4[3]; 
+__PNchannel real_t t_calc1_1, t_calc2_1, t_calc3_1, t_calc4_1, t_calc1_2, t_calc2_2, t_calc3_2, t_calc4_2, t_calc1_3, t_calc2_3, t_calc3_3, t_calc4_3,  t_calc1_4, t_calc2_4, t_calc3_4, t_calc4_4; 
+__PNchannel long n,i1_1,i2_1,i3_1,i4_1,i1_2,i2_2,i3_2,i4_2,i1_3,i2_3,i3_3,i4_3,i1_4,i2_4,i3_4,i4_4;
 __PNchannel char filename[50],output_filename_base[50];
 
 __PNprocess reader = Read_file 
@@ -630,33 +695,84 @@ __PNprocess writer = Print_step
 
 /* need 4 nbodies for rk4 */
 __PNprocess nbody1 = Nbodyprob 
-	 __PNin(n,t_fn1,y_fn1,f_i_j1)
-	 __PNout(i1,t_calc1,f_t_y1);
+	 __PNin(n,t_fn1,y_fn1,f_i_j1_1,f_i_j1_2,f_i_j1_3,f_i_j1_4)
+	 __PNout(i1_1,i1_2,i1_3,i1_4,t_calc1_1,t_calc1_2,t_calc1_3,t_calc1_4,f_t_y1);
 
-__PNprocess n_sq_calc1 = Nbody_n_sq_calculate_force
-	 __PNin(n,mass,y_fn1,t_calc1,i1)
-	 __PNout(f_i_j1);
+__PNprocess n_sq_calc1_1 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc1_1,i1_1)
+	 __PNout(f_i_j1_1);
+
+__PNprocess n_sq_calc1_2 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc1_2,i1_2)
+	 __PNout(f_i_j1_2);
+
+__PNprocess n_sq_calc1_3 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc1_3,i1_3)
+	 __PNout(f_i_j1_3);
+
+__PNprocess n_sq_calc1_4 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc1_4,i1_4)
+	 __PNout(f_i_j1_4);
 
 __PNprocess nbody2 = Nbodyprob 
-	 __PNin(n,t_fn2,y_fn2,f_i_j2)
-	 __PNout(i2,t_calc2,f_t_y2);
-__PNprocess n_sq_calc2 = Nbody_n_sq_calculate_force
-	 __PNin(n,mass,y_fn2,t_calc2,i2)
-	 __PNout(f_i_j2);
+	 __PNin(n,t_fn2,y_fn2,f_i_j2_1,f_i_j2_2,f_i_j2_3,f_i_j2_4)
+	 __PNout(i2_1,i2_2,i2_3,i2_4,t_calc2_1,t_calc2_2,t_calc2_3,t_calc2_4,f_t_y2);
+
+__PNprocess n_sq_calc2_1 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc2_1,i2_1)
+	 __PNout(f_i_j2_1);
+
+__PNprocess n_sq_calc2_2 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc2_2,i2_2)
+	 __PNout(f_i_j2_2);
+
+__PNprocess n_sq_calc2_3 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc2_3,i2_3)
+	 __PNout(f_i_j2_3);
+
+__PNprocess n_sq_calc2_4 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc2_4,i2_4)
+	 __PNout(f_i_j2_4);
 
 __PNprocess nbody3 = Nbodyprob 
-	 __PNin(n,t_fn3,y_fn3,f_i_j3)
-	 __PNout(i3,t_calc3,f_t_y3);
-__PNprocess n_sq_calc3 = Nbody_n_sq_calculate_force
-	 __PNin(n,mass,y_fn3,t_calc3,i3)
-	 __PNout(f_i_j3);
+	 __PNin(n,t_fn3,y_fn3,f_i_j3_1,f_i_j3_2,f_i_j3_3,f_i_j3_4)
+	 __PNout(i3_1,i3_2,i3_3,i3_4,t_calc3_1,t_calc3_2,t_calc3_3,t_calc3_4,f_t_y3);
+
+__PNprocess n_sq_calc3_1 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc3_1,i3_1)
+	 __PNout(f_i_j3_1);
+
+__PNprocess n_sq_calc3_2 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc3_2,i3_2)
+	 __PNout(f_i_j3_2);
+
+__PNprocess n_sq_calc3_3 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc3_3,i3_3)
+	 __PNout(f_i_j3_3);
+
+__PNprocess n_sq_calc3_4 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc3_4,i3_4)
+	 __PNout(f_i_j3_4);
 
 __PNprocess nbody4 = Nbodyprob 
-	 __PNin(n,t_fn4,y_fn4,f_i_j4)
-	 __PNout(i4,t_calc4,f_t_y4);
-__PNprocess n_sq_calc4 = Nbody_n_sq_calculate_force
-	 __PNin(n,mass,y_fn4,t_calc4,i4)
-	 __PNout(f_i_j4);
+	 __PNin(n,t_fn4,y_fn4,f_i_j4_1,f_i_j4_2,f_i_j4_3,f_i_j4_4)
+	 __PNout(i4_1,i4_2,i4_3,i4_4,t_calc4_1,t_calc4_2,t_calc4_3,t_calc4_4,f_t_y4);
+
+__PNprocess n_sq_calc4_1 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc4_1,i4_1)
+	 __PNout(f_i_j4_1);
+
+__PNprocess n_sq_calc4_2 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc4_2,i4_2)
+	 __PNout(f_i_j4_2);
+
+__PNprocess n_sq_calc4_3 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc4_3,i4_3)
+	 __PNout(f_i_j4_3);
+
+__PNprocess n_sq_calc4_4 = Nbody_n_sq_calculate_force
+	 __PNin(n,mass,y_fn1,t_calc4_4,i4_4)
+	 __PNout(f_i_j4_4);
 
 /* here we could do parallel rk steps! (dlp) */
 __PNprocess rk = RKStep 
