@@ -467,7 +467,7 @@ __PNkpn Nbodyprob __PNin(long N_chan, real_t t_chan, real_t y_chan[6], __PNrepli
 						  /* printf("sum_f_f_%ld: %e, %e %e\n",i,f_i_j[0],f_i_j[1],f_i_j[2]); */
 						  __PNout(x_chan){
 								for(l=0;l<n/2;l++){
-									 printf("writing %ld% to channel\n",(i-unread));
+									 /* printf("writing %ld% to channel\n",(i-unread)); */
 									 x[n*(i-unread) + n/2 + l] = f_i_jX[l];
 									 x_chan[l] = x[n*(i-unread)+l];
 									 x_chan[l+n/2] = x[n*(i-unread)+n/2+l];
