@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<slxMapping:SlxMappingDescriptor xmlns:slxMapping="slxMapping" AppName="nbody" Name="Synthesized">
+
+  <SingleSchedulerDesc ID="0" Name="SchedulerForProcessor(ARM00)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc1_3"/>
+        <Process Attribute="0" Name="nbody4"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="1" Name="SchedulerForProcessor(ARM01)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc2_0"/>
+        <Process Attribute="0" Name="nbody1"/>
+        <Process Attribute="0" Name="reader"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="2" Name="SchedulerForProcessor(ARM02)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc2_1"/>
+        <Process Attribute="0" Name="nbody2"/>
+        <Process Attribute="0" Name="rk"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="3" Name="SchedulerForProcessor(ARM03)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc2_2"/>
+        <Process Attribute="0" Name="nbody3"/>
+        <Process Attribute="0" Name="writer"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="4" Name="SchedulerForProcessor(ARM04)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="control"/>
+        <Process Attribute="0" Name="n_sq_calc2_3"/>
+        <Process Attribute="0" Name="n_sq_calc3_3"/>
+        <Process Attribute="0" Name="n_sq_calc4_3"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="5" Name="SchedulerForProcessor(ARM05)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc1_0"/>
+        <Process Attribute="0" Name="n_sq_calc3_0"/>
+        <Process Attribute="0" Name="n_sq_calc4_0"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="6" Name="SchedulerForProcessor(ARM06)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc1_1"/>
+        <Process Attribute="0" Name="n_sq_calc3_2"/>
+        <Process Attribute="0" Name="n_sq_calc4_2"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <SingleSchedulerDesc ID="7" Name="SchedulerForProcessor(ARM07)" SchedulingPolicy="FIFO">
+    <OutSchedulerInfo>
+      <AttributedProcesses>
+        <Process Attribute="0" Name="n_sq_calc1_2"/>
+        <Process Attribute="0" Name="n_sq_calc3_1"/>
+        <Process Attribute="0" Name="n_sq_calc4_1"/>
+      </AttributedProcesses>
+    </OutSchedulerInfo>
+  </SingleSchedulerDesc>
+
+  <MapperDesc ID="0" MappingType="Static" Name="DefaultMapper">
+    <OutMapperInfo>
+      <GroupID2PEIDs>
+        <PeGroup GroupId="0" Processors="ARM00"/>
+        <PeGroup GroupId="1" Processors="ARM01"/>
+        <PeGroup GroupId="2" Processors="ARM02"/>
+        <PeGroup GroupId="3" Processors="ARM03"/>
+        <PeGroup GroupId="4" Processors="ARM04"/>
+        <PeGroup GroupId="5" Processors="ARM05"/>
+        <PeGroup GroupId="6" Processors="ARM06"/>
+        <PeGroup GroupId="7" Processors="ARM07"/>
+      </GroupID2PEIDs>
+      <Schedulers2Groups>
+        <Scheduler2Group GroupID="0" SchedulerID="0"/>
+        <Scheduler2Group GroupID="1" SchedulerID="1"/>
+        <Scheduler2Group GroupID="2" SchedulerID="2"/>
+        <Scheduler2Group GroupID="3" SchedulerID="3"/>
+        <Scheduler2Group GroupID="4" SchedulerID="4"/>
+        <Scheduler2Group GroupID="5" SchedulerID="5"/>
+        <Scheduler2Group GroupID="6" SchedulerID="6"/>
+        <Scheduler2Group GroupID="7" SchedulerID="7"/>
+      </Schedulers2Groups>
+      <ChannelMappings>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc4_3" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_3" ProcessorFrom="ARM00" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc4_3" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="nbody3" ProcessorFrom="ARM01" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_tilde" ProcessFrom="rk" ProcessTo="control" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_tilde" ProcessFrom="rk" ProcessTo="writer" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i1_2" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_2" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn1" ProcessFrom="rk" ProcessTo="nbody1" ProcessorFrom="ARM02" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn1" ProcessFrom="rk" ProcessTo="n_sq_calc1_0" ProcessorFrom="ARM02" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="rk" ProcessorFrom="ARM01" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc2_3" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc3_2" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc3_1" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_1" ProcessorFrom="ARM03" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc4_1" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_1" ProcessorFrom="ARM00" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc4_2" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_2" ProcessorFrom="ARM00" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="t_calc2_2" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_2" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc3_3" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc3_2" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_2" ProcessorFrom="ARM03" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_tilde" ProcessFrom="rk" ProcessTo="control" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_tilde" ProcessFrom="rk" ProcessTo="writer" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc2_1" ProcessorFrom="ARM01" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc2_2" ProcessorFrom="ARM01" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="t_calc2_0" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_0" ProcessorFrom="ARM02" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc3_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc2_3" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_3" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc4_1" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc4_2" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc4_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j3_1" ProcessFrom="n_sq_calc3_1" ProcessTo="nbody3" ProcessorFrom="ARM07" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc4_2" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn1" ProcessFrom="rk" ProcessTo="n_sq_calc1_3" ProcessorFrom="ARM02" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="output_filename_base" ProcessFrom="control" ProcessTo="writer" ProcessorFrom="ARM04" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc4_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn1" ProcessFrom="rk" ProcessTo="n_sq_calc1_1" ProcessorFrom="ARM02" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn1" ProcessFrom="rk" ProcessTo="n_sq_calc1_2" ProcessorFrom="ARM02" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="control" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="t_fn4" ProcessFrom="rk" ProcessTo="nbody4" ProcessorFrom="ARM02" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc3_0" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_0" ProcessorFrom="ARM03" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn2" ProcessFrom="rk" ProcessTo="n_sq_calc2_1" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn2" ProcessFrom="rk" ProcessTo="n_sq_calc2_2" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_read" ProcessFrom="reader" ProcessTo="control" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc4_3" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j4_0" ProcessFrom="n_sq_calc4_0" ProcessTo="nbody4" ProcessorFrom="ARM05" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="local" Memory="local_mem_arm02" PnChannel="t_fn2" ProcessFrom="rk" ProcessTo="nbody2" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn2" ProcessFrom="rk" ProcessTo="nbody2" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn2" ProcessFrom="rk" ProcessTo="n_sq_calc2_0" ProcessorFrom="ARM02" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn2" ProcessFrom="rk" ProcessTo="n_sq_calc2_3" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc4_0" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_0" ProcessorFrom="ARM00" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="t_calc1_3" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_3" ProcessorFrom="ARM01" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i1_1" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_1" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_t_y3" ProcessFrom="nbody3" ProcessTo="rk" ProcessorFrom="ARM03" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j3_3" ProcessFrom="n_sq_calc3_3" ProcessTo="nbody3" ProcessorFrom="ARM04" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_t_y2" ProcessFrom="nbody2" ProcessTo="rk" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="h" ProcessFrom="control" ProcessTo="rk" ProcessorFrom="ARM04" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j4_1" ProcessFrom="n_sq_calc4_1" ProcessTo="nbody4" ProcessorFrom="ARM07" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="i1_3" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_3" ProcessorFrom="ARM01" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc2_2" ProcessorFrom="ARM01" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn3" ProcessFrom="rk" ProcessTo="n_sq_calc3_1" ProcessorFrom="ARM02" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn3" ProcessFrom="rk" ProcessTo="n_sq_calc3_2" ProcessorFrom="ARM02" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn4" ProcessFrom="rk" ProcessTo="nbody4" ProcessorFrom="ARM02" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y" ProcessFrom="control" ProcessTo="rk" ProcessorFrom="ARM04" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i4_1" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_1" ProcessorFrom="ARM00" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i4_2" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_2" ProcessorFrom="ARM00" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j4_3" ProcessFrom="n_sq_calc4_3" ProcessTo="nbody4" ProcessorFrom="ARM04" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="t_fn1" ProcessFrom="rk" ProcessTo="nbody1" ProcessorFrom="ARM02" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc1_1" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_1" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j4_2" ProcessFrom="n_sq_calc4_2" ProcessTo="nbody4" ProcessorFrom="ARM06" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc2_3" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc1_0" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc2_0" ProcessorFrom="ARM01" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc3_1" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="t_fn3" ProcessFrom="rk" ProcessTo="nbody3" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc3_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc3_2" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_t_y1" ProcessFrom="nbody1" ProcessTo="rk" ProcessorFrom="ARM01" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn4" ProcessFrom="rk" ProcessTo="n_sq_calc4_1" ProcessorFrom="ARM02" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn4" ProcessFrom="rk" ProcessTo="n_sq_calc4_0" ProcessorFrom="ARM02" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn3" ProcessFrom="rk" ProcessTo="nbody3" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn3" ProcessFrom="rk" ProcessTo="n_sq_calc3_0" ProcessorFrom="ARM02" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t" ProcessFrom="control" ProcessTo="rk" ProcessorFrom="ARM04" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_t_y4" ProcessFrom="nbody4" ProcessTo="rk" ProcessorFrom="ARM00" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="h_tilde" ProcessFrom="rk" ProcessTo="control" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i1_0" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc3_3" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_3" ProcessorFrom="ARM03" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j3_2" ProcessFrom="n_sq_calc3_2" ProcessTo="nbody3" ProcessorFrom="ARM06" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc4_1" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="filename" ProcessFrom="control" ProcessTo="reader" ProcessorFrom="ARM04" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn3" ProcessFrom="rk" ProcessTo="n_sq_calc3_3" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn4" ProcessFrom="rk" ProcessTo="n_sq_calc4_2" ProcessorFrom="ARM02" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="y_fn4" ProcessFrom="rk" ProcessTo="n_sq_calc4_3" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="t_calc1_2" ProcessFrom="nbody1" ProcessTo="n_sq_calc1_2" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc1_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="local" Memory="local_mem_arm02" PnChannel="t_calc2_1" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_1" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j1_0" ProcessFrom="n_sq_calc1_0" ProcessTo="nbody1" ProcessorFrom="ARM05" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j3_0" ProcessFrom="n_sq_calc3_0" ProcessTo="nbody3" ProcessorFrom="ARM05" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc1_2" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc2_1" ProcessorFrom="ARM01" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_i_j1_3" ProcessFrom="n_sq_calc1_3" ProcessTo="nbody1" ProcessorFrom="ARM00" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j1_1" ProcessFrom="n_sq_calc1_1" ProcessTo="nbody1" ProcessorFrom="ARM06" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="local" Memory="local_mem_arm02" PnChannel="f_i_j2_1" ProcessFrom="n_sq_calc2_1" ProcessTo="nbody2" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j1_2" ProcessFrom="n_sq_calc1_2" ProcessTo="nbody1" ProcessorFrom="ARM07" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="f_i_j2_3" ProcessFrom="n_sq_calc2_3" ProcessTo="nbody2" ProcessorFrom="ARM04" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc3_3" ProcessorFrom="ARM01" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="nbody1" ProcessorFrom="ARM01" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc1_1" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_i_j2_0" ProcessFrom="n_sq_calc2_0" ProcessTo="nbody2" ProcessorFrom="ARM01" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc3_1" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="n_sq_calc1_3" ProcessorFrom="ARM01" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="writer" ProcessorFrom="ARM01" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i4_3" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_3" ProcessorFrom="ARM00" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="f_i_j2_2" ProcessFrom="n_sq_calc2_2" ProcessTo="nbody2" ProcessorFrom="ARM03" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc2_0" ProcessorFrom="ARM01" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i3_3" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_3" ProcessorFrom="ARM03" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i3_2" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_2" ProcessorFrom="ARM03" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="i2_2" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_2" ProcessorFrom="ARM02" ProcessorTo="ARM03"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i2_3" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_3" ProcessorFrom="ARM02" ProcessorTo="ARM04"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="nbody2" ProcessorFrom="ARM01" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i3_1" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_1" ProcessorFrom="ARM03" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="n" ProcessFrom="reader" ProcessTo="nbody4" ProcessorFrom="ARM01" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i3_0" ProcessFrom="nbody3" ProcessTo="n_sq_calc3_0" ProcessorFrom="ARM03" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="cluster0" Memory="shared_mem_cluster0" PnChannel="i2_0" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_0" ProcessorFrom="ARM02" ProcessorTo="ARM01"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc1_0" ProcessorFrom="ARM01" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc1_2" ProcessorFrom="ARM01" ProcessorTo="ARM07"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="i4_0" ProcessFrom="nbody4" ProcessTo="n_sq_calc4_0" ProcessorFrom="ARM00" ProcessorTo="ARM05"/>
+        <ChannelMapping CommPrimitive="local" Memory="local_mem_arm02" PnChannel="i2_1" ProcessFrom="nbody2" ProcessTo="n_sq_calc2_1" ProcessorFrom="ARM02" ProcessorTo="ARM02"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc1_3" ProcessorFrom="ARM01" ProcessorTo="ARM00"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="n_sq_calc1_1" ProcessorFrom="ARM01" ProcessorTo="ARM06"/>
+        <ChannelMapping CommPrimitive="shared" Memory="shared_mem" PnChannel="mass" ProcessFrom="reader" ProcessTo="writer" ProcessorFrom="ARM01" ProcessorTo="ARM03"/>
+      </ChannelMappings>
+    </OutMapperInfo>
+  </MapperDesc>
+
+  <AdditionalDesc>
+    <BoundInfo GlobalBound="0">
+      <BoundList>
+        <FifoBound Bound="289" Fifo="f_i_j1_0"/>
+        <FifoBound Bound="289" Fifo="f_i_j1_1"/>
+        <FifoBound Bound="289" Fifo="f_i_j1_2"/>
+        <FifoBound Bound="289" Fifo="f_i_j1_3"/>
+        <FifoBound Bound="305" Fifo="f_i_j2_0"/>
+        <FifoBound Bound="305" Fifo="f_i_j2_1"/>
+        <FifoBound Bound="305" Fifo="f_i_j2_2"/>
+        <FifoBound Bound="305" Fifo="f_i_j2_3"/>
+        <FifoBound Bound="305" Fifo="f_i_j3_0"/>
+        <FifoBound Bound="305" Fifo="f_i_j3_1"/>
+        <FifoBound Bound="305" Fifo="f_i_j3_2"/>
+        <FifoBound Bound="305" Fifo="f_i_j3_3"/>
+        <FifoBound Bound="305" Fifo="f_i_j4_0"/>
+        <FifoBound Bound="305" Fifo="f_i_j4_1"/>
+        <FifoBound Bound="305" Fifo="f_i_j4_2"/>
+        <FifoBound Bound="305" Fifo="f_i_j4_3"/>
+        <FifoBound Bound="1153" Fifo="f_t_y1"/>
+        <FifoBound Bound="1217" Fifo="f_t_y2"/>
+        <FifoBound Bound="1217" Fifo="f_t_y3"/>
+        <FifoBound Bound="1217" Fifo="f_t_y4"/>
+        <FifoBound Bound="1" Fifo="filename"/>
+        <FifoBound Bound="20" Fifo="h"/>
+        <FifoBound Bound="20" Fifo="h_tilde"/>
+        <FifoBound Bound="291" Fifo="i1_0"/>
+        <FifoBound Bound="291" Fifo="i1_1"/>
+        <FifoBound Bound="291" Fifo="i1_2"/>
+        <FifoBound Bound="291" Fifo="i1_3"/>
+        <FifoBound Bound="306" Fifo="i2_0"/>
+        <FifoBound Bound="306" Fifo="i2_1"/>
+        <FifoBound Bound="306" Fifo="i2_2"/>
+        <FifoBound Bound="306" Fifo="i2_3"/>
+        <FifoBound Bound="306" Fifo="i3_0"/>
+        <FifoBound Bound="306" Fifo="i3_1"/>
+        <FifoBound Bound="306" Fifo="i3_2"/>
+        <FifoBound Bound="306" Fifo="i3_3"/>
+        <FifoBound Bound="306" Fifo="i4_0"/>
+        <FifoBound Bound="306" Fifo="i4_1"/>
+        <FifoBound Bound="306" Fifo="i4_2"/>
+        <FifoBound Bound="306" Fifo="i4_3"/>
+        <FifoBound Bound="1" Fifo="mass"/>
+        <FifoBound Bound="1" Fifo="n"/>
+        <FifoBound Bound="1" Fifo="output_filename_base"/>
+        <FifoBound Bound="20" Fifo="t"/>
+        <FifoBound Bound="291" Fifo="t_calc1_0"/>
+        <FifoBound Bound="291" Fifo="t_calc1_1"/>
+        <FifoBound Bound="291" Fifo="t_calc1_2"/>
+        <FifoBound Bound="291" Fifo="t_calc1_3"/>
+        <FifoBound Bound="306" Fifo="t_calc2_0"/>
+        <FifoBound Bound="306" Fifo="t_calc2_1"/>
+        <FifoBound Bound="306" Fifo="t_calc2_2"/>
+        <FifoBound Bound="306" Fifo="t_calc2_3"/>
+        <FifoBound Bound="306" Fifo="t_calc3_0"/>
+        <FifoBound Bound="306" Fifo="t_calc3_1"/>
+        <FifoBound Bound="306" Fifo="t_calc3_2"/>
+        <FifoBound Bound="306" Fifo="t_calc3_3"/>
+        <FifoBound Bound="306" Fifo="t_calc4_0"/>
+        <FifoBound Bound="306" Fifo="t_calc4_1"/>
+        <FifoBound Bound="306" Fifo="t_calc4_2"/>
+        <FifoBound Bound="306" Fifo="t_calc4_3"/>
+        <FifoBound Bound="19" Fifo="t_fn1"/>
+        <FifoBound Bound="20" Fifo="t_fn2"/>
+        <FifoBound Bound="20" Fifo="t_fn3"/>
+        <FifoBound Bound="20" Fifo="t_fn4"/>
+        <FifoBound Bound="20" Fifo="t_tilde"/>
+        <FifoBound Bound="1278" Fifo="y"/>
+        <FifoBound Bound="1279" Fifo="y_fn1"/>
+        <FifoBound Bound="1280" Fifo="y_fn2"/>
+        <FifoBound Bound="1280" Fifo="y_fn3"/>
+        <FifoBound Bound="1280" Fifo="y_fn4"/>
+        <FifoBound Bound="60" Fifo="y_read"/>
+        <FifoBound Bound="1280" Fifo="y_tilde"/>
+      </BoundList>
+    </BoundInfo>
+  </AdditionalDesc>
+
+</slxMapping:SlxMappingDescriptor>

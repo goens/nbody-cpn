@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<slxMapper:SlxMapperConfiguration xmlns:slxMapper="slxMapper">
+
+  <BoundingConfiguration>
+    <BoundingAlgorithm>
+      <Algorithm>TraceAnalysis</Algorithm>
+    </BoundingAlgorithm>
+    <BoundingIncrement>
+      <BoundingIncrementAlgorithm>Uniform</BoundingIncrementAlgorithm>
+      <MaxSteps>0</MaxSteps>
+    </BoundingIncrement>
+    <BoundingAdditionalParameters>
+      <BoundingFactor>1</BoundingFactor>
+    </BoundingAdditionalParameters>
+  </BoundingConfiguration>
+
+  <SchedulingConfiguration>
+    <SchedulingPolicies>
+      <PlatformPolicy>
+        <Policy>FIFO</Policy>
+      </PlatformPolicy>
+    </SchedulingPolicies>
+    <SchedulingTimeSlots>
+      <PlatformTimeSlot>
+        <Value>5e+07</Value>
+        <Scale>ps</Scale>
+      </PlatformTimeSlot>
+    </SchedulingTimeSlots>
+    <SchedulingPriorities>
+      <Priorities>TopologyBased</Priorities>
+    </SchedulingPriorities>
+    <SchedulingAdditionalParameters>
+      <TimeSlotFactor>1</TimeSlotFactor>
+      <TopologyHeuristic>
+        <Heuristic>DepthDescending</Heuristic>
+      </TopologyHeuristic>
+    </SchedulingAdditionalParameters>
+  </SchedulingConfiguration>
+
+  <MappingConfiguration>
+    <MappingType>Static</MappingType>
+    <MappingAlgorithm>
+      <Algorithm>BestEffort</Algorithm>
+    </MappingAlgorithm>
+    <MappingAdditionalParameters>
+      <RandomTrials>10</RandomTrials>
+    </MappingAdditionalParameters>
+  </MappingConfiguration>
+
+  <SimulationParameters>
+    <ModelCommunication>true</ModelCommunication>
+    <ModelContextSwitches>true</ModelContextSwitches>
+  </SimulationParameters>
+
+</slxMapper:SlxMapperConfiguration>
